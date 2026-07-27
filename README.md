@@ -36,20 +36,32 @@ Traect = weekly tracker
 
 Hub не импортирует и не знает бизнес-логику приложений.
 
-## Статус
+## Запуск
 
-Проект находится на начальном этапе разработки. В этом коммите:
-- архитектурные принципы
-- документация
-
-Рабочая реализация Telegram-бота — в следующих коммитах.
-
-Смотрите [docs/mvp.md](docs/mvp.md) для плана первого MVP.
-
-## Development
+Сначала установите зависимости:
 
 ```bash
 poetry install
+```
+
+Создайте `.env` файл на основе `.env.example`:
+
+```bash
+cp .env.example .env
+# Отредактируйте .env и добавьте TELEGRAM_BOT_TOKEN
+```
+
+Запустите бота:
+
+```bash
+poetry run python -m hub_bot
+```
+
+## Development
+
+Проверки качества перед коммитом:
+
+```bash
 poetry run pytest
 poetry run ruff check .
 poetry run mypy src

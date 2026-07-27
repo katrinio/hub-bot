@@ -9,8 +9,8 @@
 
 ## Telegram Shell
 
-- [ ] Подключить aiogram и создать Telegram bot instance
-- [ ] Реализовать `/start` команду
+- [x] Подключить aiogram и создать Telegram bot instance
+- [x] Реализовать `/start` команду
 - [ ] Добавить меню приложений (InlineKeyboard)
 - [ ] Добавить Postbox в меню
 - [ ] Добавить обработчик callback `hub:postbox`
