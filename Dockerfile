@@ -24,16 +24,14 @@ RUN useradd --create-home --no-log-init appuser
 
 WORKDIR /app
 
-# Copy only installed Python packages (site-packages)
-# Don't copy /usr/local/bin (contains Poetry, not needed at runtime)
 COPY --from=builder /usr/local/lib/python3.14/site-packages /usr/local/lib/python3.14/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Copy application code
 COPY --chown=appuser:appuser src ./src
 COPY --chown=appuser:appuser pyproject.toml ./
 
-# Switch to non-root user
+ENV PYTHONPATH=/app/src
+
 USER appuser
 
-# Runtime: polling bot (no HTTP server, no exposed ports)
 CMD ["python", "-m", "hub_bot"]
