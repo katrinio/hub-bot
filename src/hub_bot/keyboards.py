@@ -1,7 +1,7 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from hub_bot.apps import APPS
-from hub_bot.callback_data import AppCallback, HomeCallback
+from hub_bot.callback_data import AppCallback, HomeCallback, PostboxRefreshCallback
 
 
 def build_app_menu() -> InlineKeyboardMarkup:
@@ -27,20 +27,24 @@ def build_back_to_hub() -> InlineKeyboardMarkup:
 
 
 def build_postbox_auth_keyboard(auth_url: str) -> InlineKeyboardMarkup:
-    """Build inline keyboard for Postbox auth with URL button and back link.
+    """Build inline keyboard for Postbox auth with URL button and refresh link.
 
     Args:
         auth_url: Full URL to Postbox /auth/hub endpoint with JWT token
 
     Returns:
-        InlineKeyboardMarkup with "Open Postbox ↗" URL button and "← The Hub" callback button
+        InlineKeyboardMarkup with open, refresh, and back buttons.
     """
     open_button = InlineKeyboardButton(
         text="Открыть Postbox ↗",
         url=auth_url,
     )
+    refresh_button = InlineKeyboardButton(
+        text="🔄 Обновить ссылку",
+        callback_data=PostboxRefreshCallback().pack(),
+    )
     back_button = InlineKeyboardButton(
         text="← The Hub",
         callback_data=HomeCallback().pack(),
     )
-    return InlineKeyboardMarkup(inline_keyboard=[[open_button], [back_button]])
+    return InlineKeyboardMarkup(inline_keyboard=[[open_button], [refresh_button], [back_button]])

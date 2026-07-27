@@ -107,6 +107,28 @@ Postbox app loaded
 - Fresh token for each auth attempt
 - `POSTBOX_URL` configured via environment variable (not hardcoded)
 
+## UX: Link Refresh
+
+Так как JWT имеет TTL 5 минут, пользователь может открыть старое сообщение из истории чата, где ссылка уже истекла.
+
+Для решения этой проблемы **Postbox экран содержит кнопку обновления**:
+
+```
+🔄 Обновить ссылку
+```
+
+При клике на кнопку:
+1. Bot генерирует **новый** JWT (свежий, 5 минут TTL)
+2. Bot обновляет сообщение с новой ссылкой и кнопкой
+
+Это позволяет пользователю обновить ссылку на месте, не возвращаясь в /start меню.
+
+### Реализация
+
+- `PostboxRefreshCallback` — callback data для refresh кнопки (action: `postbox_refresh`)
+- `postbox_refresh_handler()` — обработчик, который создаёт новый JWT и обновляет сообщение
+- `build_postbox_auth_keyboard()` — включает refresh кнопку в клавиатуру
+
 ## Configuration
 
 ### Hub Bot

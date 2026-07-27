@@ -35,18 +35,19 @@
   - Handler `hub:postbox` генерирует JWT и показывает "Открыть Postbox ↗" button
 - [x] Авторизация на стороне Postbox
   - Postbox verifies JWT и создаёт session
-- [ ] Проверить полный flow ручно (end-to-end smoke test)
+- [x] Проверить полный flow ручно (end-to-end smoke test)
 
 ## Deployment & Migration
 
-- [ ] Запустить The Hub Bot на реальном Telegram account
-- [ ] Перейти с отдельного Postbox bot на Hub menu
+- [x] Запустить The Hub Bot на реальном Telegram account
+- [x] Перейти с отдельного Postbox bot на Hub menu
 - [ ] Решить судьбу старого Postbox bot (sundown, migrate users и т.д.)
 
 ## Future Integrations
 
 Laterbox, Traect, Registry — в следующих MVP:
 
+- [ ] Echo (в следующем MVP)
 - [ ] Laterbox (в следующем MVP)
 - [ ] Traect (в следующем MVP)
-- [ ] Registry (в следующем MVP)
+- [ ] Registry (?)

@@ -64,7 +64,7 @@ def test_postbox_auth_keyboard_structure() -> None:
     keyboard = build_postbox_auth_keyboard(auth_url)
 
     assert isinstance(keyboard, InlineKeyboardMarkup)
-    assert len(keyboard.inline_keyboard) == 2
+    assert len(keyboard.inline_keyboard) == 3
 
     # First row: open button
     open_row = keyboard.inline_keyboard[0]
@@ -73,8 +73,15 @@ def test_postbox_auth_keyboard_structure() -> None:
     assert "Postbox" in open_button.text
     assert "↗" in open_button.text
 
-    # Second row: back button
-    back_row = keyboard.inline_keyboard[1]
+    # Second row: refresh button
+    refresh_row = keyboard.inline_keyboard[1]
+    assert len(refresh_row) == 1
+    refresh_button = refresh_row[0]
+    assert "Обновить" in refresh_button.text
+    assert "🔄" in refresh_button.text
+
+    # Third row: back button
+    back_row = keyboard.inline_keyboard[2]
     assert len(back_row) == 1
     back_button = back_row[0]
     assert "The Hub" in back_button.text
@@ -95,7 +102,7 @@ def test_postbox_auth_keyboard_back_button_callback() -> None:
     auth_url = "https://postbox.finpipe.net/auth/hub?token=abc123"
     keyboard = build_postbox_auth_keyboard(auth_url)
 
-    back_button = keyboard.inline_keyboard[1][0]
+    back_button = keyboard.inline_keyboard[2][0]
     assert back_button.callback_data is not None
     assert "hub" in back_button.callback_data
     assert "home" in back_button.callback_data
