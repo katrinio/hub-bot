@@ -1,0 +1,24 @@
+name: SSH Check
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ssh-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check VPS access
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          port: ${{ secrets.VPS_PORT }}
+          key: ${{ secrets.VPS_DEPLOY_KEY }}
+          script: |
+            set -e
+            whoami
+            hostname
+            pwd
+            docker --version
+            docker compose version
