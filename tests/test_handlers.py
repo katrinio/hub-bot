@@ -63,7 +63,14 @@ async def test_app_handler_postbox_with_config() -> None:
 
         assert "Postbox" in response_text
         assert "📦" in response_text
-        assert "готово" in response_text.lower()
+        assert "действует" in response_text.lower()  # "действует 5 минут"
+
+        # Check app description is shown
+        assert "Трекер" in response_text or "почты" in response_text
+
+        # Check planned features are shown
+        assert "В планах:" in response_text
+        assert "•" in response_text
 
         # Check that keyboard was provided
         call_kwargs = query.message.edit_text.call_args.kwargs
@@ -98,7 +105,7 @@ async def test_app_handler_postbox_without_config() -> None:
         response_text = call_args[0][0]
 
         # Should show neutral error message (no config details)
-        assert "недоступен" in response_text.lower() or "unavailable" in response_text.lower()
+        assert "недоступ" in response_text.lower() or "unavailable" in response_text.lower()
     finally:
         os.environ.pop("HUB_AUTH_SECRET", None)
 

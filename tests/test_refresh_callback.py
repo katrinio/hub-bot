@@ -86,8 +86,10 @@ class TestPostboxRefreshCallback:
             mock_callback_query.message.edit_text.assert_called_once()
             call_args = mock_callback_query.message.edit_text.call_args
             assert call_args is not None
-            # Check that response text mentions "новая ссылка" (new link)
-            assert "новая" in call_args[0][0].lower()
+            # Check that response text contains app description and roadmap
+            response = call_args[0][0].lower()
+            assert "трекер" in response or "почты" in response
+            assert "в планах" in response
 
     @pytest.mark.asyncio
     async def test_refresh_answers_callback(
@@ -118,7 +120,7 @@ class TestPostboxRefreshCallback:
             mock_callback_query.message.edit_text.assert_called_once()
             call_args = mock_callback_query.message.edit_text.call_args
             assert call_args is not None
-            assert "недоступен" in call_args[0][0].lower()
+            assert "недоступ" in call_args[0][0].lower()
 
     @pytest.mark.asyncio
     async def test_refresh_handles_token_creation_error(

@@ -8,6 +8,7 @@ from hub_bot.apps import get_app
 from hub_bot.auth import create_auth_token
 from hub_bot.callback_data import AppCallback, HomeCallback, PostboxRefreshCallback
 from hub_bot.keyboards import build_app_menu, build_back_to_hub, build_postbox_auth_keyboard
+from hub_bot.renderers import render_app_screen
 from hub_bot.settings import get_postbox_url
 from hub_bot.urls import build_postbox_auth_url
 
@@ -43,13 +44,13 @@ async def app_handler(query: CallbackQuery, callback_data: AppCallback) -> None:
         )
         return
 
-    # Postbox auth: generate JWT and show URL button
-    if app.slug == "postbox":
+    # App with authentication integration
+    if app.auth_path:
         postbox_url = get_postbox_url()
         if not postbox_url:
             logger.error("POSTBOX_URL not configured")
             await query.message.edit_text(
-                "Postbox сейчас недоступен.\n\nПопробуй немного позже.",
+                "Приложение сейчас недоступно.\n\nПопробуй немного позже.",
                 reply_markup=build_back_to_hub(),
             )
             return
@@ -57,23 +58,25 @@ async def app_handler(query: CallbackQuery, callback_data: AppCallback) -> None:
         try:
             # Use Telegram user ID from callback (not from client state)
             user_id = query.from_user.id
-            token = create_auth_token(telegram_user_id=user_id, audience="postbox")
+            token = create_auth_token(telegram_user_id=user_id, audience=app.slug)
             auth_url = build_postbox_auth_url(postbox_url, token)
         except ValueError as e:
-            logger.error("Failed to create Postbox auth token: %s", type(e).__name__)
+            logger.error("Failed to create auth token for %s: %s", app.slug, type(e).__name__)
             await query.message.edit_text(
-                "Postbox сейчас недоступен.\n\nПопробуй немного позже.",
+                "Приложение сейчас недоступно.\n\nПопробуй немного позже.",
                 reply_markup=build_back_to_hub(),
             )
             return
 
-        response = f"{app.emoji} {app.title}\n\nВсё готово. Ссылка для входа действует 5 минут."
+        screen = render_app_screen(app)
+        response = f"{screen}\n\nСсылка для входа действует 5 минут."
         keyboard = build_postbox_auth_keyboard(auth_url)
         await query.message.edit_text(response, reply_markup=keyboard)
         return
 
-    # Default response for apps without auth integration
-    response = f"{app.emoji} {app.title}\n\nИнтеграция с {app.title} будет подключена следующим этапом."
+    # App without authentication (show screen only)
+    screen = render_app_screen(app)
+    response = f"{screen}\n\nИнтеграция будет подключена в следующем обновлении."
     keyboard = build_back_to_hub()
     await query.message.edit_text(response, reply_markup=keyboard)
 
@@ -86,28 +89,38 @@ async def postbox_refresh_handler(query: CallbackQuery, callback_data: PostboxRe
     if not query.message or isinstance(query.message, InaccessibleMessage):
         return
 
+    app = get_app("postbox")
+    if not app or not app.auth_path:
+        logger.error("Postbox app not found")
+        await query.message.edit_text(
+            "Приложение недоступно.\n\nПопробуй немного позже.",
+            reply_markup=build_back_to_hub(),
+        )
+        return
+
     postbox_url = get_postbox_url()
     if not postbox_url:
         logger.error("POSTBOX_URL not configured")
         await query.message.edit_text(
-            "Postbox сейчас недоступен.\n\nПопробуй немного позже.",
+            "Приложение сейчас недоступно.\n\nПопробуй немного позже.",
             reply_markup=build_back_to_hub(),
         )
         return
 
     try:
         user_id = query.from_user.id
-        token = create_auth_token(telegram_user_id=user_id, audience="postbox")
+        token = create_auth_token(telegram_user_id=user_id, audience=app.slug)
         auth_url = build_postbox_auth_url(postbox_url, token)
     except ValueError as e:
-        logger.error("Failed to refresh Postbox auth token: %s", type(e).__name__)
+        logger.error("Failed to refresh auth token for %s: %s", app.slug, type(e).__name__)
         await query.message.edit_text(
             "Не смог обновить ссылку.\n\nПопробуй немного позже.",
             reply_markup=build_back_to_hub(),
         )
         return
 
-    response = "Постbox\n\nНовая ссылка готова. Действует 5 минут."
+    screen = render_app_screen(app)
+    response = f"{screen}\n\nСсылка для входа действует 5 минут."
     keyboard = build_postbox_auth_keyboard(auth_url)
     await query.message.edit_text(response, reply_markup=keyboard)
 

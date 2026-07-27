@@ -8,6 +8,8 @@ class HubApp:
     slug: str
     title: str
     emoji: str
+    description: str
+    planned_features: tuple[str, ...] = ()
     auth_path: str | None = None  # e.g., "auth/hub" for Postbox
 
 
@@ -16,6 +18,12 @@ APPS = (
         slug="postbox",
         title="Postbox",
         emoji="📦",
+        description="Трекер обычной почты и отправлений.",
+        planned_features=(
+            "улучшенная история отправлений",
+            "???",
+            "PROFIT",
+        ),
         auth_path="auth/hub",
     ),
 )
