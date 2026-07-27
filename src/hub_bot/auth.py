@@ -8,7 +8,12 @@ TTL_MINUTES = 5
 
 
 def get_auth_secret() -> str:
-    """Read signing secret from environment or raise ValueError."""
+    """Read signing secret from environment or raise ValueError.
+
+    TODO (future refactoring): Move to settings.py for unified configuration.
+    Currently reads directly from os.environ like legacy code. Consolidate with
+    get_bot_token(), get_postbox_url() into single settings module.
+    """
     secret = os.environ.get("HUB_AUTH_SECRET", "").strip()
     if not secret:
         msg = (

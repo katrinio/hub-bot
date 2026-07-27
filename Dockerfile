@@ -24,9 +24,9 @@ RUN useradd --create-home --no-log-init appuser
 
 WORKDIR /app
 
-# Copy installed packages from builder
+# Copy only installed Python packages (site-packages)
+# Don't copy /usr/local/bin (contains Poetry, not needed at runtime)
 COPY --from=builder /usr/local/lib/python3.14/site-packages /usr/local/lib/python3.14/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy application code
 COPY --chown=appuser:appuser src ./src

@@ -124,6 +124,18 @@ cd the-hub-bot
 
 ## First Deployment
 
+⚠️ **BEFORE YOU START:** Stop any local bot instances with the same token:
+
+```bash
+pkill -f "python -m hub_bot"     # Kill local bot if running
+sleep 2                          # Wait for cleanup
+ps aux | grep "python -m hub_bot"  # Verify it's stopped (should be empty)
+```
+
+**Why?** Only ONE polling instance can use the token. Running both local and production simultaneously will cause conflicts.
+
+---
+
 ### 1. Prepare Environment File
 
 ```bash
@@ -463,9 +475,11 @@ For production, recommend:
 
 ---
 
-## Critical Requirement: Single Polling Instance
+## ⚠️ CRITICAL REQUIREMENT: Single Polling Instance
 
-⚠️ **CRITICAL:** Only ONE polling instance must be active with a given token.
+🚨 **MUST READ BEFORE FIRST DEPLOY** 🚨
+
+Only ONE polling instance must be active with a given Telegram bot token at any time.
 
 ### Why?
 
@@ -489,15 +503,23 @@ Telegram only allows one polling connection per bot. If multiple instances poll:
    docker compose up -d --scale hub-bot=3
    ```
 
-2. **Don't run multiple instances locally during smoke test:**
+2. **STOP the local bot before starting production:**
    ```bash
-   # ✗ BAD: Local bot + production bot both polling
+   # ✗ CRITICAL ERROR: Both polling with same token
    poetry run python -m hub_bot &
-   docker compose up -d  # Same token!
+   docker compose up -d  # BREAKS — both will fight for updates
    
-   # ✓ GOOD: Only one at a time
-   # (stop local) → (start production) → (test)
+   # ✓ CORRECT: Only one instance
+   pkill -f "python -m hub_bot"     # Kill local bot
+   sleep 2
+   docker compose up -d             # Start production
    ```
+   
+   **Warning:** If you leave local bot running during production smoke test:
+   - Both instances receive updates (duplicates)
+   - Messages may be handled by wrong instance
+   - Bot appears "broken" or unreliable
+   - Telegram API sees polling conflicts
 
 3. **Verify single instance:**
    ```bash

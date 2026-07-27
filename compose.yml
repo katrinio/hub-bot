@@ -1,42 +1,13 @@
-# The Hub Bot — Production Docker Compose
-# Single polling instance (critical requirement)
-
 services:
   hub-bot:
     build: .
     image: the-hub-bot:latest
     container_name: the-hub-bot
-
-    # Restart policy: survive crashes and VPS reboots
     restart: unless-stopped
-
-    # Environment variables from external .env file
-    env_file: .env
-
-    # Required environment variables (optional: fail-fast on missing)
-    # Uncomment to enforce configuration validation at startup
-    # environment:
-    #   - TELEGRAM_BOT_TOKEN
-    #   - HUB_AUTH_SECRET
-    #   - POSTBOX_URL
-
-    # No ports published (polling bot doesn't listen on HTTP)
-    # networks:
-    #   - (using default bridge, no need for custom network for single service)
-
-    # Logs
+    env_file:
+      - .env
     logging:
       driver: json-file
       options:
         max-size: 10m
         max-file: "3"
-
-    # Resource limits (optional, adjust based on VPS capacity)
-    # deploy:
-    #   resources:
-    #     limits:
-    #       cpus: '0.5'
-    #       memory: 256M
-    #     reservations:
-    #       cpus: '0.25'
-    #       memory: 128M
