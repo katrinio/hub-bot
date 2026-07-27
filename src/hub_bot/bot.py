@@ -1,6 +1,7 @@
 import logging
 
 from aiogram import Bot, Dispatcher
+from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand
 
 from hub_bot.handlers import router
@@ -21,7 +22,8 @@ async def create_bot(token: str) -> Bot:
 
 
 def create_dispatcher() -> Dispatcher:
-    """Create Dispatcher and register routers."""
-    dp = Dispatcher()
+    """Create Dispatcher with FSM storage and register routers."""
+    storage = MemoryStorage()
+    dp = Dispatcher(storage=storage)
     dp.include_router(router)
     return dp

@@ -95,6 +95,23 @@ Examples:
 
 Used to generate auth URLs for users (not hardcoded).
 
+### HUB_ADMIN_TELEGRAM_ID
+
+(Optional) Telegram user ID for receiving user feedback from beta-tested applications.
+
+```bash
+# Get your ID:
+# 1. Send any message to @userinfobot in Telegram
+# 2. It will reply with your user ID
+# 3. Copy that number here
+
+Example: 123456789
+```
+
+**If not set:** Feedback feature remains accessible but users see an error when submitting.
+
+**Do NOT use:** Group chat IDs or channel IDs. This must be a personal user ID.
+
 ---
 
 ## Directory Structure
@@ -154,6 +171,7 @@ Fill in:
 TELEGRAM_BOT_TOKEN=<your-bot-token>
 HUB_AUTH_SECRET=<32-byte-hex-secret>
 POSTBOX_URL=https://postbox.finpipe.net
+HUB_ADMIN_TELEGRAM_ID=<your-user-id>  # Optional: for feedback collection
 ```
 
 ### 2. Build Docker Image

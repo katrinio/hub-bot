@@ -17,3 +17,16 @@ class PostboxRefreshCallback(CallbackData, prefix="hub"):
     """Callback for refreshing Postbox auth link."""
 
     action: str = "postbox_refresh"
+
+
+class FeedbackCallback(CallbackData, prefix="hub"):
+    """Callback for opening feedback form."""
+
+    action: str = "feedback"
+    app: str
+
+
+class FeedbackCancelCallback(CallbackData, prefix="hub"):
+    """Callback for cancelling feedback form."""
+
+    action: str = "feedback_cancel"

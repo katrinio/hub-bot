@@ -1,6 +1,12 @@
 from aiogram.types import InlineKeyboardMarkup
 
-from hub_bot.keyboards import build_app_menu, build_back_to_hub, build_postbox_auth_keyboard
+from hub_bot.keyboards import (
+    build_app_keyboard,
+    build_app_menu,
+    build_back_to_hub,
+    build_feedback_form_keyboard,
+    build_postbox_auth_keyboard,
+)
 
 
 def test_app_menu_contains_postbox() -> None:
@@ -64,7 +70,7 @@ def test_postbox_auth_keyboard_structure() -> None:
     keyboard = build_postbox_auth_keyboard(auth_url)
 
     assert isinstance(keyboard, InlineKeyboardMarkup)
-    assert len(keyboard.inline_keyboard) == 3
+    assert len(keyboard.inline_keyboard) == 4
 
     # First row: open button
     open_row = keyboard.inline_keyboard[0]
@@ -80,8 +86,15 @@ def test_postbox_auth_keyboard_structure() -> None:
     assert "Обновить" in refresh_button.text
     assert "🔄" in refresh_button.text
 
-    # Third row: back button
-    back_row = keyboard.inline_keyboard[2]
+    # Third row: feedback button
+    feedback_row = keyboard.inline_keyboard[2]
+    assert len(feedback_row) == 1
+    feedback_button = feedback_row[0]
+    assert "Обратная связь" in feedback_button.text
+    assert "💬" in feedback_button.text
+
+    # Fourth row: back button
+    back_row = keyboard.inline_keyboard[3]
     assert len(back_row) == 1
     back_button = back_row[0]
     assert "The Hub" in back_button.text
@@ -102,7 +115,46 @@ def test_postbox_auth_keyboard_back_button_callback() -> None:
     auth_url = "https://postbox.finpipe.net/auth/hub?token=abc123"
     keyboard = build_postbox_auth_keyboard(auth_url)
 
-    back_button = keyboard.inline_keyboard[2][0]
+    back_button = keyboard.inline_keyboard[3][0]
     assert back_button.callback_data is not None
     assert "hub" in back_button.callback_data
     assert "home" in back_button.callback_data
+
+
+def test_build_app_keyboard_structure() -> None:
+    """Test that generic app keyboard has correct structure."""
+    from hub_bot.apps import get_app
+
+    app = get_app("postbox")
+    assert app is not None
+
+    keyboard = build_app_keyboard(app)
+    assert isinstance(keyboard, InlineKeyboardMarkup)
+    assert len(keyboard.inline_keyboard) == 2
+
+    # First row: feedback button
+    feedback_row = keyboard.inline_keyboard[0]
+    assert len(feedback_row) == 1
+    feedback_button = feedback_row[0]
+    assert "Обратная связь" in feedback_button.text
+    assert "💬" in feedback_button.text
+
+    # Second row: back button
+    back_row = keyboard.inline_keyboard[1]
+    assert len(back_row) == 1
+    back_button = back_row[0]
+    assert "The Hub" in back_button.text
+    assert "←" in back_button.text
+
+
+def test_build_feedback_form_keyboard_structure() -> None:
+    """Test that feedback form keyboard has cancel button."""
+    keyboard = build_feedback_form_keyboard()
+    assert isinstance(keyboard, InlineKeyboardMarkup)
+    assert len(keyboard.inline_keyboard) == 1
+
+    # Cancel button
+    cancel_row = keyboard.inline_keyboard[0]
+    assert len(cancel_row) == 1
+    cancel_button = cancel_row[0]
+    assert "Отмена" in cancel_button.text

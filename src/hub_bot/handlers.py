@@ -1,15 +1,29 @@
 import logging
 
-from aiogram import Router
+from aiogram import Bot, Router
 from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InaccessibleMessage, Message
 
 from hub_bot.apps import get_app
 from hub_bot.auth import create_auth_token
-from hub_bot.callback_data import AppCallback, HomeCallback, PostboxRefreshCallback
-from hub_bot.keyboards import build_app_menu, build_back_to_hub, build_postbox_auth_keyboard
+from hub_bot.callback_data import (
+    AppCallback,
+    FeedbackCallback,
+    FeedbackCancelCallback,
+    HomeCallback,
+    PostboxRefreshCallback,
+)
+from hub_bot.keyboards import (
+    build_app_keyboard,
+    build_app_menu,
+    build_back_to_hub,
+    build_feedback_form_keyboard,
+    build_postbox_auth_keyboard,
+)
 from hub_bot.renderers import render_app_screen
-from hub_bot.settings import get_postbox_url
+from hub_bot.settings import get_hub_admin_telegram_id, get_postbox_url
+from hub_bot.states import FeedbackForm
 from hub_bot.urls import build_postbox_auth_url
 
 logger = logging.getLogger(__name__)
@@ -77,7 +91,7 @@ async def app_handler(query: CallbackQuery, callback_data: AppCallback) -> None:
     # App without authentication (show screen only)
     screen = render_app_screen(app)
     response = f"{screen}\n\nИнтеграция будет подключена в следующем обновлении."
-    keyboard = build_back_to_hub()
+    keyboard = build_app_keyboard(app)
     await query.message.edit_text(response, reply_markup=keyboard)
 
 
@@ -133,6 +147,208 @@ async def home_handler(query: CallbackQuery, callback_data: HomeCallback) -> Non
     if not query.message or isinstance(query.message, InaccessibleMessage):
         return
 
+    response = (
+        "The Hub\n\n"
+        "Единая точка входа в мои приложения."
+    )
+    keyboard = build_app_menu()
+    await query.message.edit_text(response, reply_markup=keyboard)
+
+
+@router.callback_query(FeedbackCallback.filter())
+async def feedback_handler(query: CallbackQuery, callback_data: FeedbackCallback, state: FSMContext) -> None:
+    """Handle feedback button click."""
+    await query.answer()
+
+    if not query.message or isinstance(query.message, InaccessibleMessage):
+        return
+
+    # Validate app exists
+    app = get_app(callback_data.app)
+    if not app:
+        await query.message.edit_text(
+            "Приложение недоступно.\n\nПопробуйте вернуться в The Hub.",
+            reply_markup=build_back_to_hub(),
+        )
+        return
+
+    # Store app slug in FSM state
+    await state.set_state(FeedbackForm.waiting_for_feedback)
+    await state.update_data(app_slug=callback_data.app)
+
+    response = (
+        f"💬 Обратная связь — {app.title}\n\n"
+        "Напиши одним сообщением всё, что хочешь передать:\n"
+        "баг, идею, неудобство или просто впечатление.\n\n"
+        "Твой Telegram-профиль будет указан вместе с сообщением, "
+        "чтобы я мог ответить."
+    )
+    keyboard = build_feedback_form_keyboard()
+    await query.message.edit_text(response, reply_markup=keyboard)
+
+
+@router.message(FeedbackForm.waiting_for_feedback, Command("cancel"))
+async def feedback_cancel_command_handler(message: Message, state: FSMContext) -> None:
+    """Handle /cancel command during feedback form."""
+    if not message.from_user:
+        await state.clear()
+        return
+
+    data = await state.get_data()
+    app_slug = data.get("app_slug")
+
+    await state.clear()
+    await message.answer("Отмена ✓")
+
+    if app_slug:
+        app = get_app(str(app_slug))
+        if app:
+            screen = render_app_screen(app)
+            response = f"{screen}\n\nСсылка для входа действует 5 минут."
+            if app.auth_path:
+                postbox_url = get_postbox_url()
+                if postbox_url:
+                    try:
+                        user_id = message.from_user.id
+                        token = create_auth_token(telegram_user_id=user_id, audience=app.slug)
+                        auth_url = build_postbox_auth_url(postbox_url, token)
+                        keyboard = build_postbox_auth_keyboard(auth_url)
+                    except ValueError:
+                        keyboard = build_app_keyboard(app)
+                else:
+                    keyboard = build_app_keyboard(app)
+            else:
+                keyboard = build_app_keyboard(app)
+            await message.answer(response, reply_markup=keyboard)
+            return
+
+    # Fallback to home
+    response = (
+        "The Hub\n\n"
+        "Единая точка входа в мои приложения."
+    )
+    keyboard = build_app_menu()
+    await message.answer(response, reply_markup=keyboard)
+
+
+@router.message(FeedbackForm.waiting_for_feedback)
+async def feedback_form_handler(message: Message, state: FSMContext, bot: Bot) -> None:
+    """Handle feedback text submission."""
+    if not message.from_user:
+        await state.clear()
+        return
+
+    # Only accept text messages
+    if not message.text:
+        await message.reply("Пока обратную связь можно отправить только текстом.")
+        return
+
+    # Check feedback length (Telegram limit is 4096, be conservative)
+    max_feedback_length = 2000
+    if len(message.text) > max_feedback_length:
+        await message.reply(
+            f"Сообщение слишком длинное ({len(message.text)} символов, "
+            f"максимум {max_feedback_length}). "
+            f"Попробуй сократить текст."
+        )
+        return
+
+    data = await state.get_data()
+    app_slug = data.get("app_slug")
+
+    # Get app info
+    app = get_app(str(app_slug) if app_slug else "")
+    if not app:
+        await message.reply("Приложение больше недоступно. Попробуй позже.")
+        await state.clear()
+        return
+
+    # Get admin ID
+    admin_id = get_hub_admin_telegram_id()
+    if not admin_id:
+        logger.warning("HUB_ADMIN_TELEGRAM_ID not configured, feedback not sent")
+        await message.reply("Сейчас обратную связь отправить не получилось. Попробуй позже.")
+        await state.clear()
+        return
+
+    # Format admin message
+    from_text = f"Telegram ID: {message.from_user.id}"
+    if message.from_user.username:
+        from_text += f"\nUsername: @{message.from_user.username}"
+    if message.from_user.first_name:
+        from_text += f"\nName: {message.from_user.first_name}"
+
+    admin_message = f"💬 Feedback · {app.title}\n\n{message.text}\n\nFrom:\n{from_text}"
+
+    # Send to admin
+    try:
+        await bot.send_message(chat_id=admin_id, text=admin_message)
+    except Exception as e:
+        logger.error("Failed to send feedback to admin: %s", type(e).__name__)
+        await message.reply("Сейчас обратную связь отправить не получилось. Попробуй позже.")
+        await state.clear()
+        return
+
+    # Success response
+    await message.reply(f"Спасибо! Получил обратную связь по {app.title} 🙌")
+    await state.clear()
+
+    # Show app screen again
+    screen = render_app_screen(app)
+    response = f"{screen}\n\nВернёмся к приложению?"
+    if app.auth_path:
+        postbox_url = get_postbox_url()
+        if postbox_url:
+            try:
+                user_id = message.from_user.id
+                token = create_auth_token(telegram_user_id=user_id, audience=app.slug)
+                auth_url = build_postbox_auth_url(postbox_url, token)
+                keyboard = build_postbox_auth_keyboard(auth_url)
+            except ValueError:
+                keyboard = build_app_keyboard(app)
+        else:
+            keyboard = build_app_keyboard(app)
+    else:
+        keyboard = build_app_keyboard(app)
+    await message.answer(response, reply_markup=keyboard)
+
+
+@router.callback_query(FeedbackCancelCallback.filter())
+async def feedback_cancel_handler(query: CallbackQuery, state: FSMContext) -> None:
+    """Handle cancel button in feedback form."""
+    await query.answer()
+
+    if not query.message or isinstance(query.message, InaccessibleMessage):
+        return
+
+    data = await state.get_data()
+    app_slug = data.get("app_slug")
+
+    await state.clear()
+
+    if app_slug:
+        app = get_app(str(app_slug))
+        if app:
+            screen = render_app_screen(app)
+            response = f"{screen}\n\nСсылка для входа действует 5 минут."
+            if app.auth_path:
+                postbox_url = get_postbox_url()
+                if postbox_url:
+                    try:
+                        user_id = query.from_user.id
+                        token = create_auth_token(telegram_user_id=user_id, audience=app.slug)
+                        auth_url = build_postbox_auth_url(postbox_url, token)
+                        keyboard = build_postbox_auth_keyboard(auth_url)
+                    except ValueError:
+                        keyboard = build_app_keyboard(app)
+                else:
+                    keyboard = build_app_keyboard(app)
+            else:
+                keyboard = build_app_keyboard(app)
+            await query.message.edit_text(response, reply_markup=keyboard)
+            return
+
+    # Fallback to home
     response = (
         "The Hub\n\n"
         "Единая точка входа в мои приложения."

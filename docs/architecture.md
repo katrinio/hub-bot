@@ -80,3 +80,37 @@ Postbox создаёт собственную session cookie/token
 ```
 
 Hub не требует знания внутреннего устройства Postbox.
+
+## Feedback Collection
+
+Hub Bot собирает feedback пользователей для beta-версий приложений.
+
+### Flow
+
+```
+User нажимает кнопку "💬 Обратная связь" на экране приложения
+   ↓
+Hub Bot открывает форму ввода текста (FSM state)
+   ↓
+User пишет текстовое сообщение
+   ↓
+Hub Bot отправляет в Telegram администратора:
+   • app name
+   • feedback text
+   • telegram_id + username (если есть)
+   ↓
+Administrator получает сообщение
+```
+
+### Implementation
+
+- **Stateless**: каждый пользователь может оставлять feedback независимо
+- **In-app**: feedback button встроена в app screen (не требует отдельного UI)
+- **Async**: отправка администратору не блокирует пользователя
+- **Graceful degradation**: если HUB_ADMIN_TELEGRAM_ID не настроен, feedback показывает ошибку
+
+### Configuration
+
+Требует: `HUB_ADMIN_TELEGRAM_ID` (Telegram user ID администратора)
+
+Если не настроено: feedback механизм остаётся доступным, но отправка вернёт ошибку.

@@ -31,3 +31,18 @@ def get_postbox_url() -> str | None:
         return None
     # Normalize: remove trailing slash to prevent //auth/hub in URL
     return url.rstrip("/")
+
+
+def get_hub_admin_telegram_id() -> int | None:
+    """Read Hub admin Telegram ID from environment or return None if not configured.
+
+    Returns None if HUB_ADMIN_TELEGRAM_ID is not set, allowing graceful degradation.
+    Caller should handle None (e.g., show error to user without feedback capability).
+    """
+    admin_id = os.environ.get("HUB_ADMIN_TELEGRAM_ID", "").strip()
+    if not admin_id:
+        return None
+    try:
+        return int(admin_id)
+    except ValueError:
+        return None
