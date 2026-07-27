@@ -5,7 +5,7 @@
 - [x] Создать репозиторий
 - [x] Зафиксировать архитектуру в docs/architecture.md
 - [x] Описать authentication handoff в docs/auth.md
-- [ ] Настроить configuration через environment variables
+- [x] Настроить configuration через environment variables (.env + python-dotenv)
 
 ## Telegram Shell
 
@@ -18,20 +18,24 @@
 
 ## Authentication
 
-- [ ] Выбрать формат подписи (JWT / Fernet / HMAC)
-- [ ] Реализовать генерацию auth payload
-- [ ] Добавить TTL (5-10 минут)
-- [ ] Добавить audience field (`postbox`)
-- [ ] Реализовать signing и verification функции
-- [ ] Документировать shared secret между Hub и Postbox
+- [x] Выбрать формат подписи JWT / HS256
+- [x] Реализовать генерацию auth payload
+- [x] Добавить TTL 5 минут
+- [x] Добавить audience field (`postbox`)
+- [x] Реализовать signing и verification функции (Hub side)
+- [x] Документировать shared secret между Hub и Postbox
 
 ## Postbox Integration
 
-- [ ] Определить URL/endpoint для открытия Postbox из Hub
-- [ ] Передавать подтверждённую Telegram identity через signed payload
-- [ ] Создавать/находить пользователя в Postbox по telegram_user_id
-- [ ] Создавать локальную Postbox session
-- [ ] Проверить полный flow: Telegram → Hub → Postbox
+- [x] Определить URL/endpoint для открытия Postbox из Hub
+  - Использует `POSTBOX_URL` config + `/auth/hub?token=<JWT>`
+- [x] Передавать подтверждённую Telegram identity через signed payload
+  - JWT with `sub=telegram_user_id`, `aud=postbox`, `iss=the-hub-bot`, 5 min TTL
+- [x] Показывать URL button для входа в Postbox
+  - Handler `hub:postbox` генерирует JWT и показывает "Открыть Postbox ↗" button
+- [x] Авторизация на стороне Postbox
+  - Postbox verifies JWT и создаёт session
+- [ ] Проверить полный flow ручно (end-to-end smoke test)
 
 ## Deployment & Migration
 

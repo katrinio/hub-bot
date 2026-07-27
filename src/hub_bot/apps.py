@@ -8,6 +8,7 @@ class HubApp:
     slug: str
     title: str
     emoji: str
+    auth_path: str | None = None  # e.g., "auth/hub" for Postbox
 
 
 APPS = (
@@ -15,6 +16,7 @@ APPS = (
         slug="postbox",
         title="Postbox",
         emoji="📦",
+        auth_path="auth/hub",
     ),
 )
 

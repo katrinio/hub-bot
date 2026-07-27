@@ -18,3 +18,16 @@ def get_bot_token() -> str:
         )
         raise ValueError(msg)
     return token
+
+
+def get_postbox_url() -> str | None:
+    """Read Postbox URL from environment or return None if not configured.
+
+    Returns None if POSTBOX_URL is not set, allowing graceful degradation.
+    Caller should handle None (e.g., show error to user without traceback).
+    """
+    url = os.environ.get("POSTBOX_URL", "").strip()
+    if not url:
+        return None
+    # Normalize: remove trailing slash to prevent //auth/hub in URL
+    return url.rstrip("/")

@@ -8,6 +8,7 @@ def test_postbox_registered() -> None:
     assert postbox is not None
     assert postbox.title == "Postbox"
     assert postbox.emoji == "📦"
+    assert postbox.auth_path == "auth/hub"
 
 
 def test_get_app_postbox() -> None:
