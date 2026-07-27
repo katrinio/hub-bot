@@ -5,7 +5,7 @@
 - [x] Создать репозиторий
 - [x] Зафиксировать архитектуру в docs/architecture.md
 - [x] Описать authentication handoff в docs/auth.md
-- [ ] Настроить configuration через environment variables
+- [x] Настроить configuration через environment variables (.env + python-dotenv)
 
 ## Telegram Shell
 
@@ -18,12 +18,12 @@
 
 ## Authentication
 
-- [ ] Выбрать формат подписи (JWT / Fernet / HMAC)
-- [ ] Реализовать генерацию auth payload
-- [ ] Добавить TTL (5-10 минут)
-- [ ] Добавить audience field (`postbox`)
-- [ ] Реализовать signing и verification функции
-- [ ] Документировать shared secret между Hub и Postbox
+- [x] Выбрать формат подписи JWT / HS256
+- [x] Реализовать генерацию auth payload
+- [x] Добавить TTL 5 минут
+- [x] Добавить audience field (`postbox`)
+- [x] Реализовать signing и verification функции (Hub side)
+- [x] Документировать shared secret между Hub и Postbox
 
 ## Postbox Integration
 

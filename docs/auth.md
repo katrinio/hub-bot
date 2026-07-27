@@ -20,18 +20,37 @@ Hub Bot создаёт **короткоживущий подписанный pay
 4. **Имеет TTL** — истекает через несколько минут
 5. **Не может быть изменён** — signature защищает от модификации
 
-## Концептуальный payload
+## Реализация: JWT с HS256
+
+**Формат:** JWT (JSON Web Token)  
+**Algorithm:** HS256 (HMAC with SHA-256)  
+**Signing:** Симметричный ключ (`HUB_AUTH_SECRET` из `.env`)
+
+### Claims
 
 ```json
 {
-  "telegram_user_id": 123456789,
-  "app": "postbox",
-  "iat": "2026-01-15T10:30:00Z",
-  "exp": "2026-01-15T10:35:00Z"
+  "sub": "123456789",
+  "aud": "postbox",
+  "iss": "the-hub-bot",
+  "iat": 1705329000,
+  "exp": 1705329300
 }
 ```
 
-Это концептуальный пример. Конкретный формат (JWT, Fernet, HMAC и т.д.) выбирается позже.
+- **`sub`** (subject) — Telegram user ID как string
+- **`aud`** (audience) — целевое приложение (`postbox`)
+- **`iss`** (issuer) — издатель (`the-hub-bot`)
+- **`iat`** (issued-at) — время создания (UNIX timestamp)
+- **`exp`** (expiration) — время истечения (UNIX timestamp, TTL = 5 минут)
+
+### Важно: JWT подписывается, но НЕ шифруется
+
+Payload можно декодировать без secret — это нормально. Signature обеспечивает:
+- **authenticity** — приложение проверяет что Hub создал token
+- **integrity** — payload не может быть изменён
+
+Нельзя хранить секретные данные в payload. Hub передаёт только `telegram_user_id`, который уже известен Telegram.
 
 ## Security Requirements
 
@@ -70,8 +89,51 @@ Postbox creates its own session (token/cookie)
 Postbox serves application
 ```
 
-## Реализация
+## Configuration
 
-На текущем этапе конкретная реализация (JWT, Fernet, простой HMAC) не выбрана.
+### Hub Bot
 
-Она будет определена в следующем коммите, когда начнётся реальная разработка Telegram-бота.
+Требует `HUB_AUTH_SECRET` в `.env`:
+
+```bash
+HUB_AUTH_SECRET=your_secret_key_min_32_chars_recommended
+```
+
+Функция генерации:
+
+```python
+from hub_bot.auth import create_auth_token
+
+token = create_auth_token(
+    telegram_user_id=123456789,
+    audience="postbox"
+)
+```
+
+### Postbox (и другие приложения)
+
+Для проверки token:
+
+```python
+import jwt
+
+payload = jwt.decode(
+    token,
+    secret,  # тот же HUB_AUTH_SECRET
+    algorithms=["HS256"],
+    audience="postbox"
+)
+
+user_id = int(payload["sub"])
+```
+
+## Масштабирование
+
+На первом этапе Hub и приложения разделяют один signing secret.
+
+При росте числа приложений можно:
+- Использовать асимметричную подпись (RSA / EdDSA)
+- Hub подписывает приватным ключом, приложения проверяют через публичный ключ
+- Каждое приложение хранит только публичный ключ
+
+Это будет рассмотрено позже.
