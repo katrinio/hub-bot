@@ -1,28 +1,47 @@
-# MVP
+# MVP Checklist
 
-## Why this exists
+## Foundation
 
-- State the smallest useful version of the project.
-- Keep the scope explicit.
+- [x] Создать репозиторий
+- [x] Зафиксировать архитектуру в docs/architecture.md
+- [x] Описать authentication handoff в docs/auth.md
+- [ ] Настроить configuration через environment variables
 
-## In scope
+## Telegram Shell
 
-- List the minimum user-facing behavior.
-- Keep the list short.
+- [ ] Подключить aiogram и создать Telegram bot instance
+- [ ] Реализовать `/start` команду
+- [ ] Добавить меню приложений (InlineKeyboard)
+- [ ] Добавить Postbox в меню
+- [ ] Добавить обработчик callback `hub:postbox`
 
-## Out of scope
+## Authentication
 
-- List what this version does not do.
-- Remove this section if everything fits in scope.
+- [ ] Выбрать формат подписи (JWT / Fernet / HMAC)
+- [ ] Реализовать генерацию auth payload
+- [ ] Добавить TTL (5-10 минут)
+- [ ] Добавить audience field (`postbox`)
+- [ ] Реализовать signing и verification функции
+- [ ] Документировать shared secret между Hub и Postbox
 
-## Scenario
+## Postbox Integration
 
-```bash
-command one
-command two
-```
+- [ ] Определить URL/endpoint для открытия Postbox из Hub
+- [ ] Передавать подтверждённую Telegram identity через signed payload
+- [ ] Создавать/находить пользователя в Postbox по telegram_user_id
+- [ ] Создавать локальную Postbox session
+- [ ] Проверить полный flow: Telegram → Hub → Postbox
 
-## Rule
+## Deployment & Migration
 
-- Write the test for whether something belongs in this version.
+- [ ] Запустить The Hub Bot на реальном Telegram account
+- [ ] Перейти с отдельного Postbox bot на Hub menu
+- [ ] Решить судьбу старого Postbox bot (sundown, migrate users и т.д.)
 
+## Future Integrations
+
+Laterbox, Traect, Registry — в следующих MVP:
+
+- [ ] Laterbox (в следующем MVP)
+- [ ] Traect (в следующем MVP)
+- [ ] Registry (в следующем MVP)

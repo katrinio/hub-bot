@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "python-project-template"
+name = "the-hub-bot"
 version = "0.1.0"
-description = "A starting point for small Python projects."
+description = "Telegram entry point for independent applications"
 authors = ["Katrin Torsunova"]
 readme = "README.md"
 packages = [
-    { include = "src" },
+    { include = "hub_bot", from = "src" },
 ]
 
 [tool.poetry.dependencies]

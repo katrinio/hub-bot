@@ -1,6 +1,6 @@
 # Contributing
 
-This repository is a template. The same workflow applies to projects started from it.
+The Hub Bot is a small independent Telegram bot project. All work follows the same workflow.
 
 ## Setup
 
