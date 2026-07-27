@@ -99,10 +99,10 @@ Used to generate auth URLs for users (not hardcoded).
 
 ## Directory Structure
 
-Recommended layout on VPS:
+Production layout on VPS:
 
 ```
-/home/username/projects/the-hub-bot/
+/home/username/projects/hub-bot/
 ├── compose.yml          # Docker Compose configuration
 ├── .env                 # Production secrets (mode 600)
 ├── Dockerfile           # Build configuration
@@ -198,11 +198,11 @@ If you see configuration errors:
 ERROR - TELEGRAM_BOT_TOKEN not found
 ```
 
-Then check `.env` values and permissions:
+Then check `.env` values and permissions without printing secrets:
 ```bash
-cat .env                    # Verify values
-docker compose restart      # Retry startup
-docker compose logs         # Check full logs
+test -s .env && ls -l .env
+docker compose restart hub-bot
+docker compose logs --tail=100 hub-bot
 ```
 
 ### 5. Run Smoke Test
@@ -213,55 +213,100 @@ See [Smoke Test](#smoke-test) section below.
 
 ## Update Flow
 
-When deploying an update from main branch:
+Production deploy is automated by GitHub Actions. A push or merge to `main` starts `.github/workflows/deploy.yml`.
+The workflow first runs:
 
 ```bash
-# Fetch latest code
-git fetch origin main
-
-# Apply changes (safe hard reset to main)
-git reset --hard origin/main
-
-# Rebuild image with new code
-docker compose build
-
-# Restart with new image (hot swap)
-docker compose up -d --remove-orphans
-
-# Verify
-docker compose ps
-docker compose logs --tail=50 hub-bot
+poetry run pytest
+poetry run ruff check .
+poetry run mypy src
 ```
 
-### Rollback (if update fails)
+Only after those checks pass, GitHub Actions connects to the VPS over SSH and runs the production deploy script.
+Pull requests are not deployed before merge.
+
+The same workflow also supports manual redeploy through **GitHub Actions → Deploy Production → Run workflow**.
+
+### Remote Deploy Script
+
+The workflow executes this on the VPS:
+
+```bash
+set -euo pipefail
+
+cd ~/projects/hub-bot
+
+git fetch origin main
+git reset --hard origin/main
+
+docker compose build
+docker compose up -d --remove-orphans
+
+docker compose ps
+sleep 5
+docker compose ps
+
+container_id="$(docker compose ps -q hub-bot)"
+if [ -z "$container_id" ]; then
+  echo "hub-bot container is missing after deploy"
+  docker compose ps
+  docker compose logs --tail=100 hub-bot
+  exit 1
+fi
+
+status="$(docker inspect -f '{{.State.Status}}' "$container_id")"
+restarting="$(docker inspect -f '{{.State.Restarting}}' "$container_id")"
+
+if [ "$status" != "running" ] || [ "$restarting" = "true" ]; then
+  echo "hub-bot container is not healthy after deploy: status=$status restarting=$restarting"
+  docker compose ps
+  docker compose logs --tail=100 hub-bot
+  exit 1
+fi
+
+docker compose logs --tail=50 hub-bot
+docker image prune -f
+```
+
+The deploy intentionally does not run `docker compose down`, does not run `git clean`, does not scale the service, and does not start another bot instance in CI.
+`git reset --hard origin/main` updates tracked files only; the production `.env` is untracked/gitignored and remains only on the VPS.
+GitHub Actions passes only SSH connection secrets and never passes or prints application secrets such as `TELEGRAM_BOT_TOKEN`, `HUB_AUTH_SECRET`, or `POSTBOX_URL`.
+
+The workflow uses:
+
+```yaml
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+```
+
+This prevents overlapping production deploy jobs for the polling bot.
+
+### Rollback
 
 If the new version has issues:
 
 ```bash
-# Revert to previous commit
-git checkout HEAD~1
+cd ~/projects/hub-bot
 
-# Rebuild
+git log --oneline
+git reset --hard <known-good-commit>
 docker compose build
-
-# Restart
 docker compose up -d
 
-# Verify smoke test
-docker compose logs hub-bot
+docker compose ps
+docker compose logs --tail=100 hub-bot
 ```
 
-To find a specific known-good commit:
-```bash
-git log --oneline | head -10
-git reset --hard <commit-hash>
-```
+The next automatic deploy from `main` will reset production back to `origin/main`. To make rollback durable, revert or fix `main` and let the workflow deploy that commit.
 
 ---
 
 ## Operational Tasks
 
 ### View Logs
+
+Run these on the VPS from `~/projects/hub-bot`.
 
 **Live logs (follow mode):**
 ```bash
@@ -285,10 +330,6 @@ Useful after configuration changes or to recover from transient issues:
 ```bash
 # Restart (maintains data/logs)
 docker compose restart hub-bot
-
-# Full stop + start
-docker compose down
-docker compose up -d
 
 # Forceful restart
 docker compose kill hub-bot
@@ -323,9 +364,6 @@ Shows: CPU %, memory usage, network I/O, block I/O.
 ```bash
 # Running processes
 docker compose exec hub-bot ps aux
-
-# Environment variables
-docker compose exec hub-bot env
 
 # Current working directory
 docker compose exec hub-bot pwd
@@ -755,8 +793,8 @@ docker compose restart hub-bot
 ### Can't connect to Postbox from Hub auth button
 
 ```bash
-# Check POSTBOX_URL in .env
-cat .env | grep POSTBOX_URL
+# Check that POSTBOX_URL is present without printing its value
+docker compose exec hub-bot sh -c 'test -n "$POSTBOX_URL"'
 
 # Verify it's reachable from VPS
 docker compose exec hub-bot curl -I https://postbox.finpipe.net
@@ -793,13 +831,9 @@ For production, consider:
 
 ### Automated Deployments
 
-GitHub Actions CI/CD can be configured to:
-- Build image on push
-- Push to registry (Docker Hub, GitHub Container Registry)
-- SSH deploy to VPS
-- Restart container
-
-See `.github/workflows/` for current CI setup.
+GitHub Actions automatically deploys production after a successful push or merge to `main`.
+Manual redeploy is available from **GitHub Actions → Deploy Production → Run workflow**.
+The diagnostic `SSH Check` workflow remains manual and does not deploy code.
 
 ---
 
@@ -814,5 +848,5 @@ For issues:
 
 ---
 
-**Last updated:** 2026-07-27  
-**Version:** 1.0 (Hub Bot Production Deployment v1)
+**Last updated:** 2026-07-28
+**Version:** 1.1 (Automated GitHub Actions production deployment)

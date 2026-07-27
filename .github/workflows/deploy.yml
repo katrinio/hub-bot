@@ -1,0 +1,87 @@
+name: Deploy Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Install dependencies
+        run: poetry install --no-interaction
+
+      - name: Run tests
+        run: poetry run pytest
+
+      - name: Run Ruff
+        run: poetry run ruff check .
+
+      - name: Run MyPy
+        run: poetry run mypy src
+
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    needs: quality
+
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          port: ${{ secrets.VPS_PORT }}
+          key: ${{ secrets.VPS_DEPLOY_KEY }}
+          script: |
+            set -euo pipefail
+
+            cd ~/projects/hub-bot
+
+            git fetch origin main
+            git reset --hard origin/main
+
+            docker compose build
+            docker compose up -d --remove-orphans
+
+            docker compose ps
+            sleep 5
+            docker compose ps
+
+            container_id="$(docker compose ps -q hub-bot)"
+            if [ -z "$container_id" ]; then
+              echo "hub-bot container is missing after deploy"
+              docker compose ps
+              docker compose logs --tail=100 hub-bot
+              exit 1
+            fi
+
+            status="$(docker inspect -f '{{.State.Status}}' "$container_id")"
+            restarting="$(docker inspect -f '{{.State.Restarting}}' "$container_id")"
+
+            if [ "$status" != "running" ] || [ "$restarting" = "true" ]; then
+              echo "hub-bot container is not healthy after deploy: status=$status restarting=$restarting"
+              docker compose ps
+              docker compose logs --tail=100 hub-bot
+              exit 1
+            fi
+
+            docker compose logs --tail=50 hub-bot
+            docker image prune -f
