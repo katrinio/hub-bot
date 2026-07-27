@@ -11,6 +11,7 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.14,<3.15"
 aiogram = "^3.30.0"
+python-dotenv = "^1.2.2"
 
 [build-system]
 requires = ["poetry-core>=1.9.0"]
@@ -67,6 +68,7 @@ ignore = [
     "B023", # lambda definition closures
     "B904", # raise() without implicit from
     "B905", # strict-less zip
+    "RUF001", # ambiguous characters (Cyrillic in Russian text)
     "RUF012", # mutable class attrs without ClassVar
     "PLR2004", "PLR0913", "PLR0915", "PLR0911", "PLR0912", # pylint checks
     "COM812", "ISC001", # Ruff format conflicts

@@ -38,17 +38,17 @@ Hub не импортирует и не знает бизнес-логику п�
 
 ## Запуск
 
-Сначала установите зависимости:
+Установите зависимости:
 
 ```bash
 poetry install
 ```
 
-Создайте `.env` файл на основе `.env.example`:
+Убедитесь что `.env` файл содержит `TELEGRAM_BOT_TOKEN`:
 
 ```bash
-cp .env.example .env
-# Отредактируйте .env и добавьте TELEGRAM_BOT_TOKEN
+# .env должен содержать:
+TELEGRAM_BOT_TOKEN=your_bot_token_here
 ```
 
 Запустите бота:
@@ -56,6 +56,8 @@ cp .env.example .env
 ```bash
 poetry run python -m hub_bot
 ```
+
+Бот читает токен из `.env` файла или переменной окружения.
 
 ## Development
 

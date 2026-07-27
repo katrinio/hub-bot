@@ -11,9 +11,10 @@
 
 - [x] Подключить aiogram и создать Telegram bot instance
 - [x] Реализовать `/start` команду
-- [ ] Добавить меню приложений (InlineKeyboard)
-- [ ] Добавить Postbox в меню
-- [ ] Добавить обработчик callback `hub:postbox`
+- [x] Добавить меню приложений (InlineKeyboard)
+- [x] Добавить Postbox в меню
+- [x] Добавить обработчик callback `hub:postbox`
+- [x] Добавить обработчик возврата в The Hub (`hub:home`)
 
 ## Authentication
 
