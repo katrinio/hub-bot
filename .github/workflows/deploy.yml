@@ -73,11 +73,11 @@ jobs:
               exit 1
             fi
 
-            status="$(docker inspect -f '{{.State.Status}}' "$container_id")"
+            container_status="$(docker inspect -f '{{.State.Status}}' "$container_id")"
             restarting="$(docker inspect -f '{{.State.Restarting}}' "$container_id")"
 
-            if [ "$status" != "running" ] || [ "$restarting" = "true" ]; then
-              echo "hub-bot container is not healthy after deploy: status=$status restarting=$restarting"
+            if [ "$container_status" != "running" ] || [ "$restarting" = "true" ]; then
+              echo "hub-bot container is not healthy after deploy: status=$container_status restarting=$restarting"
               docker compose ps
               docker compose logs --tail=100 hub-bot
               exit 1
