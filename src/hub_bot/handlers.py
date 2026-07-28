@@ -52,10 +52,12 @@ async def app_handler(query: CallbackQuery, callback_data: AppCallback) -> None:
 
     app = get_app(callback_data.app)
     if not app:
-        await query.message.edit_text(
-            "Приложение недоступно.\n\nПопробуйте вернуться в The Hub.",
-            reply_markup=build_back_to_hub(),
+        response = (
+            "The Hub\n\n"
+            "Единая точка входа в мои приложения."
         )
+        keyboard = build_app_menu()
+        await query.message.edit_text(response, reply_markup=keyboard)
         return
 
     # App with authentication integration
@@ -166,10 +168,12 @@ async def feedback_handler(query: CallbackQuery, callback_data: FeedbackCallback
     # Validate app exists
     app = get_app(callback_data.app)
     if not app:
-        await query.message.edit_text(
-            "Приложение недоступно.\n\nПопробуйте вернуться в The Hub.",
-            reply_markup=build_back_to_hub(),
+        response = (
+            "The Hub\n\n"
+            "Единая точка входа в мои приложения."
         )
+        keyboard = build_app_menu()
+        await query.message.edit_text(response, reply_markup=keyboard)
         return
 
     # Store app slug in FSM state

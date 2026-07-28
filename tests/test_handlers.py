@@ -146,7 +146,7 @@ async def test_app_handler_postbox_uses_callback_user_id() -> None:
 
 @pytest.mark.asyncio
 async def test_app_handler_unknown_app() -> None:
-    """Test that unknown app callback is handled safely."""
+    """Test that unknown app callback returns to hub menu."""
     query = AsyncMock()
     query.message = AsyncMock()
     query.message.edit_text = AsyncMock()
@@ -160,7 +160,9 @@ async def test_app_handler_unknown_app() -> None:
     call_args = query.message.edit_text.call_args
     response_text = call_args[0][0]
 
-    assert "недоступно" in response_text.lower()
+    # Should return to hub menu, not show error
+    assert "The Hub" in response_text
+    assert "Единая точка входа" in response_text
 
 
 @pytest.mark.asyncio

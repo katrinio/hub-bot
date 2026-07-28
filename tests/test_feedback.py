@@ -67,7 +67,7 @@ async def test_feedback_handler_accepts_valid_app() -> None:
 
 @pytest.mark.asyncio
 async def test_feedback_handler_rejects_unknown_app() -> None:
-    """Test that feedback handler safely rejects unknown app slug."""
+    """Test that feedback handler safely returns to hub menu for unknown app."""
     query = AsyncMock()
     query.message = AsyncMock()
     query.message.edit_text = AsyncMock()
@@ -83,8 +83,9 @@ async def test_feedback_handler_rejects_unknown_app() -> None:
     call_args = query.message.edit_text.call_args
     response_text = call_args[0][0]
 
-    # Should show error, not crash
-    assert "недоступно" in response_text.lower()
+    # Should return to hub menu, not crash
+    assert "The Hub" in response_text
+    assert "Единая точка входа" in response_text
 
 
 @pytest.mark.asyncio
