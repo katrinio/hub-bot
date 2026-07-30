@@ -58,10 +58,13 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
+            mkdir -p data
             docker compose build
+
+            docker compose run --rm hub-bot alembic upgrade head
+
             docker compose up -d --remove-orphans
 
-            docker compose ps
             sleep 5
             docker compose ps
 
@@ -82,6 +85,8 @@ jobs:
               docker compose logs --tail=100 hub-bot
               exit 1
             fi
+
+            docker compose exec -T hub-bot alembic current
 
             docker compose logs --tail=50 hub-bot
             docker image prune -f
