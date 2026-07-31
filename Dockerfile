@@ -36,6 +36,14 @@ ENV PYTHONPATH=/app/src
 
 USER appuser
 
-# Run migrations first, then start bot
-# If migrations fail, container exits with error (no fallback)
-CMD ["sh", "-c", "alembic upgrade head && python -m hub_bot"]
+# Diagnostics and startup
+CMD ["sh", "-c", "set -e; \
+  echo 'DATABASE_URL check:'; \
+  test -n \"$DATABASE_URL\" || (echo 'ERROR: DATABASE_URL not set'; exit 1); \
+  echo \"✓ DATABASE_URL is configured\"; \
+  echo ''; \
+  echo 'Running Alembic migrations...'; \
+  alembic upgrade head && \
+  echo ''; \
+  echo 'Starting bot...'; \
+  python -m hub_bot"]
