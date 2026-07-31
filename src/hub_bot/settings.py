@@ -33,16 +33,71 @@ def get_postbox_url() -> str | None:
     return url.rstrip("/")
 
 
-def get_hub_admin_telegram_id() -> int | None:
-    """Read Hub admin Telegram ID from environment or return None if not configured.
+def get_admin_telegram_id() -> int | None:
+    """Read admin Telegram ID from environment (for feedback and stats).
 
-    Returns None if HUB_ADMIN_TELEGRAM_ID is not set, allowing graceful degradation.
-    Caller should handle None (e.g., show error to user without feedback capability).
+    Returns None if ADMIN_TELEGRAM_ID is not set, allowing graceful degradation.
+    Caller should handle None (e.g., show error to user without capability).
     """
-    admin_id = os.environ.get("HUB_ADMIN_TELEGRAM_ID", "").strip()
+    admin_id = os.environ.get("ADMIN_TELEGRAM_ID", "").strip()
     if not admin_id:
         return None
     try:
         return int(admin_id)
     except ValueError:
         return None
+
+
+def get_database_url() -> str:
+    """Read database URL from environment.
+
+    Returns:
+        SQLAlchemy database URL (e.g., sqlite+aiosqlite:///./data/hub.db)
+
+    Raises:
+        ValueError: If DATABASE_URL is not set or invalid
+    """
+    url = os.environ.get("DATABASE_URL", "").strip()
+    if not url:
+        msg = (
+            "DATABASE_URL not found. "
+            "Add it to .env file:\n"
+            "  export DATABASE_URL='sqlite+aiosqlite:///./data/hub.db'\n"
+            "  poetry run python -m hub_bot"
+        )
+        raise ValueError(msg)
+    return url
+
+
+def get_app_timezone() -> str:
+    """Read application timezone from environment.
+
+    Used to calculate 'today' for statistics (e.g., new users today).
+    Database stores all times in UTC.
+
+    Returns:
+        Timezone name (e.g., 'Europe/Belgrade', 'UTC')
+        Defaults to 'Europe/Belgrade' if not set.
+    """
+    tz = os.environ.get("APP_TIMEZONE", "Europe/Belgrade").strip()
+    if not tz:
+        return "Europe/Belgrade"
+    return tz
+
+
+def validate_admin_telegram_id() -> None:
+    """Validate ADMIN_TELEGRAM_ID configuration on startup.
+
+    Raises:
+        ValueError: If the value is set but not a valid integer
+    """
+    admin_id = os.environ.get("ADMIN_TELEGRAM_ID", "").strip()
+    if not admin_id:
+        # Not set is OK (stats command will be unavailable)
+        return
+
+    try:
+        int(admin_id)
+    except ValueError:
+        msg = f"Invalid ADMIN_TELEGRAM_ID: must be a number. Got: {admin_id!r}"
+        raise ValueError(msg)

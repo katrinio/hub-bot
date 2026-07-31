@@ -1,5 +1,7 @@
 import logging
+from datetime import datetime
 
+import pytz
 from aiogram import Bot, Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
@@ -14,6 +16,8 @@ from hub_bot.callback_data import (
     HomeCallback,
     PostboxRefreshCallback,
 )
+from hub_bot.db import UserRepository
+from hub_bot.db.connection import get_session
 from hub_bot.keyboards import (
     build_app_keyboard,
     build_app_menu,
@@ -22,7 +26,11 @@ from hub_bot.keyboards import (
     build_postbox_auth_keyboard,
 )
 from hub_bot.renderers import render_app_screen
-from hub_bot.settings import get_hub_admin_telegram_id, get_postbox_url
+from hub_bot.settings import (
+    get_admin_telegram_id,
+    get_app_timezone,
+    get_postbox_url,
+)
 from hub_bot.states import FeedbackForm
 from hub_bot.urls import build_postbox_auth_url
 
@@ -34,10 +42,7 @@ router = Router()
 @router.message(Command("start"))
 async def start_handler(message: Message) -> None:
     """Handle /start command."""
-    response = (
-        "The Hub\n\n"
-        "Единая точка входа в мои приложения."
-    )
+    response = "The Hub\n\nЕдиная точка входа в мои приложения."
     keyboard = build_app_menu()
     await message.answer(response, reply_markup=keyboard)
 
@@ -52,10 +57,7 @@ async def app_handler(query: CallbackQuery, callback_data: AppCallback) -> None:
 
     app = get_app(callback_data.app)
     if not app:
-        response = (
-            "The Hub\n\n"
-            "Единая точка входа в мои приложения."
-        )
+        response = "The Hub\n\nЕдиная точка входа в мои приложения."
         keyboard = build_app_menu()
         await query.message.edit_text(response, reply_markup=keyboard)
         return
@@ -149,10 +151,7 @@ async def home_handler(query: CallbackQuery, callback_data: HomeCallback) -> Non
     if not query.message or isinstance(query.message, InaccessibleMessage):
         return
 
-    response = (
-        "The Hub\n\n"
-        "Единая точка входа в мои приложения."
-    )
+    response = "The Hub\n\nЕдиная точка входа в мои приложения."
     keyboard = build_app_menu()
     await query.message.edit_text(response, reply_markup=keyboard)
 
@@ -168,10 +167,7 @@ async def feedback_handler(query: CallbackQuery, callback_data: FeedbackCallback
     # Validate app exists
     app = get_app(callback_data.app)
     if not app:
-        response = (
-            "The Hub\n\n"
-            "Единая точка входа в мои приложения."
-        )
+        response = "The Hub\n\nЕдиная точка входа в мои приложения."
         keyboard = build_app_menu()
         await query.message.edit_text(response, reply_markup=keyboard)
         return
@@ -227,10 +223,7 @@ async def feedback_cancel_command_handler(message: Message, state: FSMContext) -
             return
 
     # Fallback to home
-    response = (
-        "The Hub\n\n"
-        "Единая точка входа в мои приложения."
-    )
+    response = "The Hub\n\nЕдиная точка входа в мои приложения."
     keyboard = build_app_menu()
     await message.answer(response, reply_markup=keyboard)
 
@@ -268,9 +261,9 @@ async def feedback_form_handler(message: Message, state: FSMContext, bot: Bot) -
         return
 
     # Get admin ID
-    admin_id = get_hub_admin_telegram_id()
+    admin_id = get_admin_telegram_id()
     if not admin_id:
-        logger.warning("HUB_ADMIN_TELEGRAM_ID not configured, feedback not sent")
+        logger.warning("ADMIN_TELEGRAM_ID not configured, feedback not sent")
         await message.reply("Сейчас обратную связь отправить не получилось. Попробуй позже.")
         await state.clear()
         return
@@ -353,9 +346,52 @@ async def feedback_cancel_handler(query: CallbackQuery, state: FSMContext) -> No
             return
 
     # Fallback to home
-    response = (
-        "The Hub\n\n"
-        "Единая точка входа в мои приложения."
-    )
+    response = "The Hub\n\nЕдиная точка входа в мои приложения."
     keyboard = build_app_menu()
     await query.message.edit_text(response, reply_markup=keyboard)
+
+
+@router.message(Command("stats"))
+async def stats_handler(message: Message) -> None:
+    """Handle /stats command - show statistics (admin only).
+
+    Statistics include:
+    - Total users
+    - New users today
+    - New users in last 7 days
+    - Active users in last 7 days
+    """
+    admin_id = get_admin_telegram_id()
+
+    if not admin_id or not message.from_user:
+        await message.answer("Команда недоступна.")
+        return
+
+    if message.from_user.id != admin_id:
+        await message.answer("Команда недоступна.")
+        return
+
+    try:
+        async with get_session() as session:
+            total = await UserRepository.count_total(session)
+            new_7_days = await UserRepository.count_new_7_days(session)
+            active_7_days = await UserRepository.count_active_7_days(session)
+
+            # Calculate "new today" using app timezone
+            tz_name = get_app_timezone()
+            tz = pytz.timezone(tz_name)
+            now_tz = datetime.now(tz)
+
+            new_today = await UserRepository.count_new_today(session, now_tz)
+
+        response = (
+            "Статистика The Hub\n\n"
+            f"Всего пользователей: {total}\n"
+            f"Новых сегодня: {new_today}\n"
+            f"Новых за 7 дней: {new_7_days}\n"
+            f"Активных за 7 дней: {active_7_days}"
+        )
+        await message.answer(response)
+    except Exception as e:
+        logger.error("Error generating stats: %s", type(e).__name__, exc_info=True)
+        await message.answer("Ошибка при получении статистики. Попробуйте позже.")
