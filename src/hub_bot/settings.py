@@ -33,13 +33,13 @@ def get_postbox_url() -> str | None:
     return url.rstrip("/")
 
 
-def get_hub_admin_telegram_id() -> int | None:
-    """Read Hub admin Telegram ID from environment or return None if not configured.
+def get_admin_telegram_id() -> int | None:
+    """Read admin Telegram ID from environment (for feedback and stats).
 
-    Returns None if HUB_ADMIN_TELEGRAM_ID is not set, allowing graceful degradation.
-    Caller should handle None (e.g., show error to user without feedback capability).
+    Returns None if ADMIN_TELEGRAM_ID is not set, allowing graceful degradation.
+    Caller should handle None (e.g., show error to user without capability).
     """
-    admin_id = os.environ.get("HUB_ADMIN_TELEGRAM_ID", "").strip()
+    admin_id = os.environ.get("ADMIN_TELEGRAM_ID", "").strip()
     if not admin_id:
         return None
     try:
@@ -83,20 +83,6 @@ def get_app_timezone() -> str:
     if not tz:
         return "Europe/Belgrade"
     return tz
-
-
-def get_admin_telegram_id() -> int | None:
-    """Read Admin Telegram ID from environment for /stats command.
-
-    Returns None if ADMIN_TELEGRAM_ID is not configured.
-    """
-    admin_id = os.environ.get("ADMIN_TELEGRAM_ID", "").strip()
-    if not admin_id:
-        return None
-    try:
-        return int(admin_id)
-    except ValueError:
-        return None
 
 
 def validate_admin_telegram_id() -> None:

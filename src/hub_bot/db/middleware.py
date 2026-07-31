@@ -43,14 +43,17 @@ class UserTrackingMiddleware(BaseMiddleware):
         return await handler(event, data)
 
     @staticmethod
-    async def _track_user(update: Update) -> None:
-        """Track user from update.
+    async def _track_user(update: Update) -> bool:
+        """Track user from update if applicable.
 
         Handles updates that contain from_user (message, callback_query, etc.).
-        Skips updates without from_user gracefully.
+        Skips updates without from_user or from bot accounts gracefully.
 
         Args:
             update: Telegram update
+
+        Returns:
+            True if user was tracked, False if tracking was skipped
         """
         # Determine source and extract from_user
         from_user = None
@@ -61,8 +64,14 @@ class UserTrackingMiddleware(BaseMiddleware):
         # Other update types (channel_post, etc.) may not have from_user
 
         if not from_user:
-            # No user to track, continue silently
-            return
+            # No user to track, skip silently
+            logger.debug("Skipping tracking: update has no from_user")
+            return False
+
+        if from_user.is_bot:
+            # Don't track bot accounts
+            logger.debug("Skipping tracking: user is a bot (id=%s)", from_user.id)
+            return False
 
         try:
             async with get_session() as session:
@@ -74,6 +83,7 @@ class UserTrackingMiddleware(BaseMiddleware):
                     last_name=from_user.last_name,
                     language_code=from_user.language_code,
                 )
+            return True
         except SQLAlchemyError as e:
             logger.error(
                 "Failed to track user %s: %s",
@@ -81,6 +91,7 @@ class UserTrackingMiddleware(BaseMiddleware):
                 type(e).__name__,
                 exc_info=True,
             )
+            return False
         except Exception as e:
             logger.error(
                 "Unexpected error tracking user %s: %s",
@@ -88,3 +99,4 @@ class UserTrackingMiddleware(BaseMiddleware):
                 type(e).__name__,
                 exc_info=True,
             )
+            return False

@@ -39,10 +39,7 @@ async def init_db() -> None:
         expire_on_commit=False,
     )
 
-    # Verify connection
-    async with _async_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    logger.info("Database initialized successfully")
+    logger.info("Database engine initialized (schema managed by Alembic)")
 
 
 async def close_db() -> None:

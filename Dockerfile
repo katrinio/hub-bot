@@ -28,10 +28,14 @@ COPY --from=builder /usr/local/lib/python3.14/site-packages /usr/local/lib/pytho
 COPY --from=builder /usr/local/bin /usr/local/bin
 
 COPY --chown=appuser:appuser src ./src
+COPY --chown=appuser:appuser alembic ./alembic
+COPY --chown=appuser:appuser alembic.ini ./
 COPY --chown=appuser:appuser pyproject.toml ./
 
 ENV PYTHONPATH=/app/src
 
 USER appuser
 
-CMD ["python", "-m", "hub_bot"]
+# Run migrations first, then start bot
+# If migrations fail, container exits with error (no fallback)
+CMD ["sh", "-c", "alembic upgrade head && python -m hub_bot"]

@@ -112,7 +112,7 @@ async def test_feedback_form_stores_app_slug() -> None:
 @pytest.mark.asyncio
 async def test_feedback_form_accepts_text_message() -> None:
     """Test that text feedback is accepted and sent to admin."""
-    os.environ["HUB_ADMIN_TELEGRAM_ID"] = "123456789"
+    os.environ["ADMIN_TELEGRAM_ID"] = "123456789"
 
     try:
         message = AsyncMock()
@@ -155,7 +155,7 @@ async def test_feedback_form_accepts_text_message() -> None:
         # Verify state cleared
         state.clear.assert_called_once()
     finally:
-        os.environ.pop("HUB_ADMIN_TELEGRAM_ID", None)
+        os.environ.pop("ADMIN_TELEGRAM_ID", None)
 
 
 @pytest.mark.asyncio
@@ -202,8 +202,8 @@ async def test_feedback_form_rejects_too_long_text() -> None:
 
 @pytest.mark.asyncio
 async def test_feedback_without_admin_id_shows_error() -> None:
-    """Test that missing HUB_ADMIN_TELEGRAM_ID is handled safely."""
-    os.environ.pop("HUB_ADMIN_TELEGRAM_ID", None)
+    """Test that missing ADMIN_TELEGRAM_ID is handled safely."""
+    os.environ.pop("ADMIN_TELEGRAM_ID", None)
 
     try:
         message = AsyncMock()
@@ -235,7 +235,7 @@ async def test_feedback_without_admin_id_shows_error() -> None:
 @pytest.mark.asyncio
 async def test_feedback_admin_message_includes_user_id() -> None:
     """Test that admin message includes Telegram user ID."""
-    os.environ["HUB_ADMIN_TELEGRAM_ID"] = "123456789"
+    os.environ["ADMIN_TELEGRAM_ID"] = "123456789"
 
     try:
         message = AsyncMock()
@@ -261,13 +261,13 @@ async def test_feedback_admin_message_includes_user_id() -> None:
 
         assert "111222333" in admin_message
     finally:
-        os.environ.pop("HUB_ADMIN_TELEGRAM_ID", None)
+        os.environ.pop("ADMIN_TELEGRAM_ID", None)
 
 
 @pytest.mark.asyncio
 async def test_feedback_admin_message_includes_username_if_exists() -> None:
     """Test that admin message includes username only if it exists."""
-    os.environ["HUB_ADMIN_TELEGRAM_ID"] = "123456789"
+    os.environ["ADMIN_TELEGRAM_ID"] = "123456789"
 
     try:
         message = AsyncMock()
@@ -293,7 +293,7 @@ async def test_feedback_admin_message_includes_username_if_exists() -> None:
 
         assert "@realuser" in admin_message
     finally:
-        os.environ.pop("HUB_ADMIN_TELEGRAM_ID", None)
+        os.environ.pop("ADMIN_TELEGRAM_ID", None)
 
 
 @pytest.mark.asyncio
@@ -373,7 +373,7 @@ async def test_feedback_cancel_fallback_to_home_when_app_missing() -> None:
 @pytest.mark.asyncio
 async def test_feedback_success_shows_app_screen() -> None:
     """Test that successful feedback shows app screen for return."""
-    os.environ["HUB_ADMIN_TELEGRAM_ID"] = "123456789"
+    os.environ["ADMIN_TELEGRAM_ID"] = "123456789"
     os.environ["POSTBOX_URL"] = "https://postbox.finpipe.net"
     os.environ["HUB_AUTH_SECRET"] = "test-secret"
 
@@ -406,7 +406,7 @@ async def test_feedback_success_shows_app_screen() -> None:
         answer_text = message.answer.call_args[0][0]
         assert "Postbox" in answer_text
     finally:
-        os.environ.pop("HUB_ADMIN_TELEGRAM_ID", None)
+        os.environ.pop("ADMIN_TELEGRAM_ID", None)
         os.environ.pop("POSTBOX_URL", None)
         os.environ.pop("HUB_AUTH_SECRET", None)
 
@@ -414,7 +414,7 @@ async def test_feedback_success_shows_app_screen() -> None:
 @pytest.mark.asyncio
 async def test_feedback_delivery_failure_shown_to_user() -> None:
     """Test that delivery failure to admin is handled safely."""
-    os.environ["HUB_ADMIN_TELEGRAM_ID"] = "123456789"
+    os.environ["ADMIN_TELEGRAM_ID"] = "123456789"
 
     try:
         message = AsyncMock()
@@ -446,7 +446,7 @@ async def test_feedback_delivery_failure_shown_to_user() -> None:
         # Should NOT show app screen after error
         message.answer.assert_not_called()
     finally:
-        os.environ.pop("HUB_ADMIN_TELEGRAM_ID", None)
+        os.environ.pop("ADMIN_TELEGRAM_ID", None)
 
 
 @pytest.mark.asyncio

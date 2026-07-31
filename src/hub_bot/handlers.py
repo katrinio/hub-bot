@@ -29,7 +29,6 @@ from hub_bot.renderers import render_app_screen
 from hub_bot.settings import (
     get_admin_telegram_id,
     get_app_timezone,
-    get_hub_admin_telegram_id,
     get_postbox_url,
 )
 from hub_bot.states import FeedbackForm
@@ -277,9 +276,9 @@ async def feedback_form_handler(message: Message, state: FSMContext, bot: Bot) -
         return
 
     # Get admin ID
-    admin_id = get_hub_admin_telegram_id()
+    admin_id = get_admin_telegram_id()
     if not admin_id:
-        logger.warning("HUB_ADMIN_TELEGRAM_ID not configured, feedback not sent")
+        logger.warning("ADMIN_TELEGRAM_ID not configured, feedback not sent")
         await message.reply("Сейчас обратную связь отправить не получилось. Попробуй позже.")
         await state.clear()
         return

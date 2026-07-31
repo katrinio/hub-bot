@@ -184,3 +184,93 @@ async def test_middleware_handles_user_without_username() -> None:
         call_kwargs = mock_upsert.call_args.kwargs
         assert call_kwargs["username"] is None  # No username provided
         assert call_kwargs["first_name"] == "NoUsername"
+
+
+@pytest.mark.asyncio
+async def test_middleware_calls_handler_when_no_from_user() -> None:
+    """Test that handler is called even when update has no from_user (e.g., channel_post)."""
+    middleware = UserTrackingMiddleware()
+
+    # Update without from_user (e.g., channel_post)
+    update = Update(update_id=3)
+
+    # Mock handler that returns a distinct value
+    handler = AsyncMock(return_value="handler_result")
+    data = {}
+
+    # Don't mock upsert - we want to verify it's not called
+    with patch(
+        "hub_bot.db.middleware.UserRepository.upsert", new_callable=AsyncMock
+    ) as mock_upsert:
+        result = await middleware(handler, update, data)
+
+        # upsert should NOT be called (no from_user)
+        mock_upsert.assert_not_called()
+
+    # Handler MUST be called and return its result
+    handler.assert_called_once_with(update, data)
+    assert result == "handler_result"
+
+
+@pytest.mark.asyncio
+async def test_middleware_calls_handler_when_user_is_bot() -> None:
+    """Test that handler is called even when user is a bot."""
+    middleware = UserTrackingMiddleware()
+
+    # Create bot user
+    from_user = TelegramUser(id=333, is_bot=True, first_name="BotUser")
+    chat = Chat(id=1, type="private")
+    message = Message(message_id=1, date=0, chat=chat, from_user=from_user)
+
+    update = Update(update_id=1, message=message)
+
+    # Mock handler
+    handler = AsyncMock(return_value="bot_handler_result")
+    data = {}
+
+    with patch(
+        "hub_bot.db.middleware.UserRepository.upsert", new_callable=AsyncMock
+    ) as mock_upsert:
+        result = await middleware(handler, update, data)
+
+        # upsert should NOT be called (user is bot)
+        mock_upsert.assert_not_called()
+
+    # Handler MUST be called and return its result
+    handler.assert_called_once_with(update, data)
+    assert result == "bot_handler_result"
+
+
+@pytest.mark.asyncio
+async def test_middleware_calls_handler_on_db_error() -> None:
+    """Test that handler is called even when DB error occurs."""
+    middleware = UserTrackingMiddleware()
+
+    # Create valid user
+    from_user = TelegramUser(id=444, is_bot=False, first_name="TestUser")
+    chat = Chat(id=1, type="private")
+    message = Message(message_id=1, date=0, chat=chat, from_user=from_user)
+
+    update = Update(update_id=1, message=message)
+
+    # Mock handler that returns a result
+    handler = AsyncMock(return_value="error_handled")
+    data = {}
+
+    mock_session = AsyncMock()
+
+    # upsert throws an error
+    with patch(
+        "hub_bot.db.middleware.get_session"
+    ) as mock_get_session, patch(
+        "hub_bot.db.middleware.UserRepository.upsert",
+        new_callable=AsyncMock,
+        side_effect=Exception("DB is down"),
+    ):
+        mock_get_session.return_value.__aenter__.return_value = mock_session
+
+        result = await middleware(handler, update, data)
+
+    # Handler MUST still be called despite DB error
+    handler.assert_called_once_with(update, data)
+    assert result == "error_handled"
