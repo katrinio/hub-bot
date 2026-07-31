@@ -42,10 +42,7 @@ router = Router()
 @router.message(Command("start"))
 async def start_handler(message: Message) -> None:
     """Handle /start command."""
-    response = (
-        "The Hub\n\n"
-        "Единая точка входа в мои приложения."
-    )
+    response = "The Hub\n\nЕдиная точка входа в мои приложения."
     keyboard = build_app_menu()
     await message.answer(response, reply_markup=keyboard)
 
@@ -60,10 +57,7 @@ async def app_handler(query: CallbackQuery, callback_data: AppCallback) -> None:
 
     app = get_app(callback_data.app)
     if not app:
-        response = (
-            "The Hub\n\n"
-            "Единая точка входа в мои приложения."
-        )
+        response = "The Hub\n\nЕдиная точка входа в мои приложения."
         keyboard = build_app_menu()
         await query.message.edit_text(response, reply_markup=keyboard)
         return
@@ -157,10 +151,7 @@ async def home_handler(query: CallbackQuery, callback_data: HomeCallback) -> Non
     if not query.message or isinstance(query.message, InaccessibleMessage):
         return
 
-    response = (
-        "The Hub\n\n"
-        "Единая точка входа в мои приложения."
-    )
+    response = "The Hub\n\nЕдиная точка входа в мои приложения."
     keyboard = build_app_menu()
     await query.message.edit_text(response, reply_markup=keyboard)
 
@@ -176,10 +167,7 @@ async def feedback_handler(query: CallbackQuery, callback_data: FeedbackCallback
     # Validate app exists
     app = get_app(callback_data.app)
     if not app:
-        response = (
-            "The Hub\n\n"
-            "Единая точка входа в мои приложения."
-        )
+        response = "The Hub\n\nЕдиная точка входа в мои приложения."
         keyboard = build_app_menu()
         await query.message.edit_text(response, reply_markup=keyboard)
         return
@@ -235,10 +223,7 @@ async def feedback_cancel_command_handler(message: Message, state: FSMContext) -
             return
 
     # Fallback to home
-    response = (
-        "The Hub\n\n"
-        "Единая точка входа в мои приложения."
-    )
+    response = "The Hub\n\nЕдиная точка входа в мои приложения."
     keyboard = build_app_menu()
     await message.answer(response, reply_markup=keyboard)
 
@@ -361,10 +346,7 @@ async def feedback_cancel_handler(query: CallbackQuery, state: FSMContext) -> No
             return
 
     # Fallback to home
-    response = (
-        "The Hub\n\n"
-        "Единая точка входа в мои приложения."
-    )
+    response = "The Hub\n\nЕдиная точка входа в мои приложения."
     keyboard = build_app_menu()
     await query.message.edit_text(response, reply_markup=keyboard)
 

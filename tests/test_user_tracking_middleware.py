@@ -1,5 +1,6 @@
 """Tests for user tracking middleware."""
 
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -24,22 +25,21 @@ async def test_middleware_tracks_message_sender() -> None:
         language_code="en",
     )
     chat = Chat(id=1, type="private")
-    message = Message(message_id=1, date=0, chat=chat, from_user=from_user)
+    message = Message(message_id=1, date=datetime.now(UTC), chat=chat, from_user=from_user)
 
     update = Update(update_id=1, message=message)
 
     # Mock handler and data
     handler = AsyncMock(return_value=None)
-    data = {}
+    data: dict[str, object] = {}
 
     # Mock get_session to avoid DB init
     mock_session = AsyncMock()
 
-    with patch(
-        "hub_bot.db.middleware.get_session"
-    ) as mock_get_session, patch(
-        "hub_bot.db.middleware.UserRepository.upsert", new_callable=AsyncMock
-    ) as mock_upsert:
+    with (
+        patch("hub_bot.db.middleware.get_session") as mock_get_session,
+        patch("hub_bot.db.middleware.UserRepository.upsert", new_callable=AsyncMock) as mock_upsert,
+    ):
         mock_get_session.return_value.__aenter__.return_value = mock_session
 
         await middleware(handler, update, data)
@@ -61,27 +61,22 @@ async def test_middleware_tracks_callback_query_sender() -> None:
     middleware = UserTrackingMiddleware()
 
     # Create callback_query update
-    from_user = TelegramUser(
-        id=987654321, is_bot=False, first_name="Callback", username="cbuser"
-    )
-    callback_query = CallbackQuery(
-        id="callback_id", from_user=from_user, chat_instance="instance"
-    )
+    from_user = TelegramUser(id=987654321, is_bot=False, first_name="Callback", username="cbuser")
+    callback_query = CallbackQuery(id="callback_id", from_user=from_user, chat_instance="instance")
 
     update = Update(update_id=2, callback_query=callback_query)
 
     # Mock handler and data
     handler = AsyncMock(return_value=None)
-    data = {}
+    data: dict[str, object] = {}
 
     # Mock get_session
     mock_session = AsyncMock()
 
-    with patch(
-        "hub_bot.db.middleware.get_session"
-    ) as mock_get_session, patch(
-        "hub_bot.db.middleware.UserRepository.upsert", new_callable=AsyncMock
-    ) as mock_upsert:
+    with (
+        patch("hub_bot.db.middleware.get_session") as mock_get_session,
+        patch("hub_bot.db.middleware.UserRepository.upsert", new_callable=AsyncMock) as mock_upsert,
+    ):
         mock_get_session.return_value.__aenter__.return_value = mock_session
 
         await middleware(handler, update, data)
@@ -103,11 +98,9 @@ async def test_middleware_handles_update_without_from_user() -> None:
 
     # Mock handler and data
     handler = AsyncMock(return_value="success")
-    data = {}
+    data: dict[str, object] = {}
 
-    with patch(
-        "hub_bot.db.middleware.UserRepository.upsert", new_callable=AsyncMock
-    ) as mock_upsert:
+    with patch("hub_bot.db.middleware.UserRepository.upsert", new_callable=AsyncMock) as mock_upsert:
         result = await middleware(handler, update, data)
 
         # upsert should NOT be called (no from_user)
@@ -126,24 +119,25 @@ async def test_middleware_continues_on_db_error() -> None:
     # Create message update
     from_user = TelegramUser(id=111, is_bot=False, first_name="Test")
     chat = Chat(id=1, type="private")
-    message = Message(message_id=1, date=0, chat=chat, from_user=from_user)
+    message = Message(message_id=1, date=datetime.now(UTC), chat=chat, from_user=from_user)
 
     update = Update(update_id=1, message=message)
 
     # Mock handler to return success
     handler = AsyncMock(return_value="handler_success")
-    data = {}
+    data: dict[str, object] = {}
 
     # Mock upsert to raise an error
     mock_session = AsyncMock()
 
-    with patch(
-        "hub_bot.db.middleware.get_session"
-    ) as mock_get_session, patch(
-        "hub_bot.db.middleware.UserRepository.upsert",
-        new_callable=AsyncMock,
-        side_effect=Exception("DB error"),
-    ) as mock_upsert:
+    with (
+        patch("hub_bot.db.middleware.get_session") as mock_get_session,
+        patch(
+            "hub_bot.db.middleware.UserRepository.upsert",
+            new_callable=AsyncMock,
+            side_effect=Exception("DB error"),
+        ) as mock_upsert,
+    ):
         mock_get_session.return_value.__aenter__.return_value = mock_session
         result = await middleware(handler, update, data)
 
@@ -163,20 +157,19 @@ async def test_middleware_handles_user_without_username() -> None:
     # Create user without username
     from_user = TelegramUser(id=222, is_bot=False, first_name="NoUsername")
     chat = Chat(id=1, type="private")
-    message = Message(message_id=1, date=0, chat=chat, from_user=from_user)
+    message = Message(message_id=1, date=datetime.now(UTC), chat=chat, from_user=from_user)
 
     update = Update(update_id=1, message=message)
 
     handler = AsyncMock(return_value=None)
-    data = {}
+    data: dict[str, object] = {}
 
     mock_session = AsyncMock()
 
-    with patch(
-        "hub_bot.db.middleware.get_session"
-    ) as mock_get_session, patch(
-        "hub_bot.db.middleware.UserRepository.upsert", new_callable=AsyncMock
-    ) as mock_upsert:
+    with (
+        patch("hub_bot.db.middleware.get_session") as mock_get_session,
+        patch("hub_bot.db.middleware.UserRepository.upsert", new_callable=AsyncMock) as mock_upsert,
+    ):
         mock_get_session.return_value.__aenter__.return_value = mock_session
 
         await middleware(handler, update, data)
@@ -196,12 +189,10 @@ async def test_middleware_calls_handler_when_no_from_user() -> None:
 
     # Mock handler that returns a distinct value
     handler = AsyncMock(return_value="handler_result")
-    data = {}
+    data: dict[str, object] = {}
 
     # Don't mock upsert - we want to verify it's not called
-    with patch(
-        "hub_bot.db.middleware.UserRepository.upsert", new_callable=AsyncMock
-    ) as mock_upsert:
+    with patch("hub_bot.db.middleware.UserRepository.upsert", new_callable=AsyncMock) as mock_upsert:
         result = await middleware(handler, update, data)
 
         # upsert should NOT be called (no from_user)
@@ -220,17 +211,15 @@ async def test_middleware_calls_handler_when_user_is_bot() -> None:
     # Create bot user
     from_user = TelegramUser(id=333, is_bot=True, first_name="BotUser")
     chat = Chat(id=1, type="private")
-    message = Message(message_id=1, date=0, chat=chat, from_user=from_user)
+    message = Message(message_id=1, date=datetime.now(UTC), chat=chat, from_user=from_user)
 
     update = Update(update_id=1, message=message)
 
     # Mock handler
     handler = AsyncMock(return_value="bot_handler_result")
-    data = {}
+    data: dict[str, object] = {}
 
-    with patch(
-        "hub_bot.db.middleware.UserRepository.upsert", new_callable=AsyncMock
-    ) as mock_upsert:
+    with patch("hub_bot.db.middleware.UserRepository.upsert", new_callable=AsyncMock) as mock_upsert:
         result = await middleware(handler, update, data)
 
         # upsert should NOT be called (user is bot)
@@ -249,23 +238,24 @@ async def test_middleware_calls_handler_on_db_error() -> None:
     # Create valid user
     from_user = TelegramUser(id=444, is_bot=False, first_name="TestUser")
     chat = Chat(id=1, type="private")
-    message = Message(message_id=1, date=0, chat=chat, from_user=from_user)
+    message = Message(message_id=1, date=datetime.now(UTC), chat=chat, from_user=from_user)
 
     update = Update(update_id=1, message=message)
 
     # Mock handler that returns a result
     handler = AsyncMock(return_value="error_handled")
-    data = {}
+    data: dict[str, object] = {}
 
     mock_session = AsyncMock()
 
     # upsert throws an error
-    with patch(
-        "hub_bot.db.middleware.get_session"
-    ) as mock_get_session, patch(
-        "hub_bot.db.middleware.UserRepository.upsert",
-        new_callable=AsyncMock,
-        side_effect=Exception("DB is down"),
+    with (
+        patch("hub_bot.db.middleware.get_session") as mock_get_session,
+        patch(
+            "hub_bot.db.middleware.UserRepository.upsert",
+            new_callable=AsyncMock,
+            side_effect=Exception("DB is down"),
+        ),
     ):
         mock_get_session.return_value.__aenter__.return_value = mock_session
 

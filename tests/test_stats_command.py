@@ -76,11 +76,7 @@ async def test_stats_shows_format(monkeypatch: pytest.MonkeyPatch) -> None:
     # Actual DB stats test is in test_db_user.py
 
     response = (
-        "Статистика The Hub\n\n"
-        "Всего пользователей: 0\n"
-        "Новых сегодня: 0\n"
-        "Новых за 7 дней: 0\n"
-        "Активных за 7 дней: 0"
+        "Статистика The Hub\n\nВсего пользователей: 0\nНовых сегодня: 0\nНовых за 7 дней: 0\nАктивных за 7 дней: 0"
     )
 
     assert "Статистика The Hub" in response

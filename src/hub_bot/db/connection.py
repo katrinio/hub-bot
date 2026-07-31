@@ -1,12 +1,12 @@
 """Database connection and session management."""
 
 import logging
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any
+from typing import cast
 
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
 from hub_bot.settings import get_database_url
 
@@ -17,9 +17,9 @@ class _SessionFactoryProxy:
     """Late-bound session factory exported for package compatibility."""
 
     def __init__(self) -> None:
-        self._factory: sessionmaker[Any] | None = None
+        self._factory: async_sessionmaker[AsyncSession] | None = None
 
-    def configure(self, factory: sessionmaker[Any]) -> None:
+    def configure(self, factory: async_sessionmaker[AsyncSession]) -> None:
         self._factory = factory
 
     def __bool__(self) -> bool:
@@ -28,12 +28,12 @@ class _SessionFactoryProxy:
     def __call__(self) -> AsyncSession:
         if self._factory is None:
             raise RuntimeError("Database not initialized. Call init_db() first.")
-        return self._factory()
+        return cast(AsyncSession, self._factory())
 
 
 class _DatabaseState:
     def __init__(self) -> None:
-        self.async_engine = None
+        self.async_engine: AsyncEngine | None = None
         self.session_factory = _SessionFactoryProxy()
 
 
@@ -55,11 +55,12 @@ async def init_db() -> None:
         pool_pre_ping=True,
     )
 
-    _state.session_factory.configure(sessionmaker(
-        _state.async_engine,
-        class_=AsyncSession,
-        expire_on_commit=False,
-    ))
+    _state.session_factory.configure(
+        async_sessionmaker(
+            _state.async_engine,
+            expire_on_commit=False,
+        )
+    )
 
     logger.info("Database engine initialized (schema managed by Alembic)")
 
@@ -75,7 +76,7 @@ async def close_db() -> None:
 
 
 @asynccontextmanager
-async def get_session():
+async def get_session() -> AsyncIterator[AsyncSession]:
     """Get a database session for use with context manager.
 
     Usage:

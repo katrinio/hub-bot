@@ -70,9 +70,7 @@ class UserRepository:
             raise
 
     @staticmethod
-    async def get_by_telegram_id(
-        session: AsyncSession, telegram_id: int
-    ) -> User | None:
+    async def get_by_telegram_id(session: AsyncSession, telegram_id: int) -> User | None:
         """Get user by Telegram ID.
 
         Args:

@@ -1,26 +1,24 @@
 """Tests for user database operations."""
 
+from collections.abc import AsyncIterator
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from hub_bot.db.models import Base, User
 from hub_bot.db.repository import UserRepository
 
 
 @pytest.fixture
-async def test_db():
+async def test_db() -> AsyncIterator[async_sessionmaker[AsyncSession]]:
     """Create a temporary test database."""
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    TestSessionLocal = sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
+    TestSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
     yield TestSessionLocal
 
@@ -28,7 +26,7 @@ async def test_db():
 
 
 @pytest.fixture
-async def session(test_db):
+async def session(test_db: async_sessionmaker[AsyncSession]) -> AsyncIterator[AsyncSession]:
     """Provide a test database session."""
     async with test_db() as session:
         yield session
@@ -97,15 +95,11 @@ async def test_upsert_syncs_username(session: AsyncSession) -> None:
     telegram_id = 123456789
 
     # First upsert with username
-    user1 = await UserRepository.upsert(
-        session, telegram_id=telegram_id, username="oldname"
-    )
+    user1 = await UserRepository.upsert(session, telegram_id=telegram_id, username="oldname")
     assert user1.username == "oldname"
 
     # Upsert with new username
-    user2 = await UserRepository.upsert(
-        session, telegram_id=telegram_id, username="newname"
-    )
+    user2 = await UserRepository.upsert(session, telegram_id=telegram_id, username="newname")
     assert user2.username == "newname"
 
 
@@ -196,9 +190,7 @@ async def test_count_new_today_with_timezone(session: AsyncSession) -> None:
 async def test_get_by_telegram_id(session: AsyncSession) -> None:
     """Test retrieving user by telegram_id."""
     telegram_id = 123456789
-    await UserRepository.upsert(
-        session, telegram_id=telegram_id, username="testuser"
-    )
+    await UserRepository.upsert(session, telegram_id=telegram_id, username="testuser")
 
     user = await UserRepository.get_by_telegram_id(session, telegram_id)
     assert user is not None

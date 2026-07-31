@@ -57,9 +57,7 @@ def build_postbox_auth_keyboard(auth_url: str) -> InlineKeyboardMarkup:
         text="← The Hub",
         callback_data=HomeCallback().pack(),
     )
-    return InlineKeyboardMarkup(
-        inline_keyboard=[[open_button], [refresh_button], [feedback_button], [back_button]]
-    )
+    return InlineKeyboardMarkup(inline_keyboard=[[open_button], [refresh_button], [feedback_button], [back_button]])
 
 
 def build_app_keyboard(app: HubApp) -> InlineKeyboardMarkup:

@@ -99,8 +99,5 @@ def validate_admin_telegram_id() -> None:
     try:
         int(admin_id)
     except ValueError:
-        msg = (
-            "Invalid ADMIN_TELEGRAM_ID: must be a number. "
-            f"Got: {admin_id!r}"
-        )
+        msg = f"Invalid ADMIN_TELEGRAM_ID: must be a number. Got: {admin_id!r}"
         raise ValueError(msg)
