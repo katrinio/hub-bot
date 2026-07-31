@@ -1,5 +1,6 @@
 """Tests for /stats command."""
 
+from contextlib import suppress
 from unittest.mock import AsyncMock
 
 import pytest
@@ -61,12 +62,8 @@ async def test_stats_shows_statistics_to_admin(monkeypatch: pytest.MonkeyPatch) 
     # For now, test will fail because DB is not initialized,
     # but that's OK - it shows the auth check works
 
-    try:
+    with suppress(Exception):
         await stats_handler(message)
-    except Exception:
-        # Expected to fail on DB operations, but auth check should pass
-        # We can verify via message.answer call
-        pass
 
     # If we got here without immediate rejection, auth passed
     # Real test would need proper DB setup
@@ -78,19 +75,12 @@ async def test_stats_shows_format(monkeypatch: pytest.MonkeyPatch) -> None:
     # This is a format test - verifies the command would produce correct output
     # Actual DB stats test is in test_db_user.py
 
-    # Expected format from the handler:
-    # Статистика The Hub
-    # Всего пользователей: N
-    # Новых сегодня: N
-    # Новых за 7 дней: N
-    # Активных за 7 дней: N
-
-    format_check = (
-        "Статистика The Hub" in "Статистика The Hub\n\n"
+    response = (
+        "Статистика The Hub\n\n"
         "Всего пользователей: 0\n"
         "Новых сегодня: 0\n"
         "Новых за 7 дней: 0\n"
         "Активных за 7 дней: 0"
     )
 
-    assert format_check
+    assert "Статистика The Hub" in response

@@ -3,18 +3,42 @@
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-from hub_bot.db.models import Base
 from hub_bot.settings import get_database_url
 
 logger = logging.getLogger(__name__)
 
-# Lazy initialization
-_async_engine = None
-AsyncSessionLocal = None
+
+class _SessionFactoryProxy:
+    """Late-bound session factory exported for package compatibility."""
+
+    def __init__(self) -> None:
+        self._factory: sessionmaker[Any] | None = None
+
+    def configure(self, factory: sessionmaker[Any]) -> None:
+        self._factory = factory
+
+    def __bool__(self) -> bool:
+        return self._factory is not None
+
+    def __call__(self) -> AsyncSession:
+        if self._factory is None:
+            raise RuntimeError("Database not initialized. Call init_db() first.")
+        return self._factory()
+
+
+class _DatabaseState:
+    def __init__(self) -> None:
+        self.async_engine = None
+        self.session_factory = _SessionFactoryProxy()
+
+
+_state = _DatabaseState()
+AsyncSessionLocal = _state.session_factory
 
 
 async def init_db() -> None:
@@ -22,22 +46,20 @@ async def init_db() -> None:
 
     Must be called once at application startup, before creating any sessions.
     """
-    global _async_engine, AsyncSessionLocal
-
     database_url = get_database_url()
     logger.info("Initializing database: %s", database_url)
 
-    _async_engine = create_async_engine(
+    _state.async_engine = create_async_engine(
         database_url,
         echo=False,
         pool_pre_ping=True,
     )
 
-    AsyncSessionLocal = sessionmaker(
-        _async_engine,
+    _state.session_factory.configure(sessionmaker(
+        _state.async_engine,
         class_=AsyncSession,
         expire_on_commit=False,
-    )
+    ))
 
     logger.info("Database engine initialized (schema managed by Alembic)")
 
@@ -47,10 +69,8 @@ async def close_db() -> None:
 
     Must be called once at application shutdown.
     """
-    global _async_engine
-
-    if _async_engine:
-        await _async_engine.dispose()
+    if _state.async_engine:
+        await _state.async_engine.dispose()
         logger.info("Database connection closed")
 
 
@@ -62,10 +82,10 @@ async def get_session():
         async with get_session() as session:
             await UserRepository.get_by_id(session, user_id)
     """
-    if not AsyncSessionLocal:
+    if not _state.session_factory:
         raise RuntimeError("Database not initialized. Call init_db() first.")
 
-    session = AsyncSessionLocal()
+    session = _state.session_factory()
     try:
         yield session
     except Exception:
