@@ -1,4 +1,4 @@
-"""User repository for database operations."""
+"""Repository for database operations."""
 
 from datetime import UTC, datetime, timedelta
 
@@ -6,7 +6,8 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from hub_bot.db.models import User
+from hub_bot.apps import get_app
+from hub_bot.db.models import Feedback, User
 
 
 class UserRepository:
@@ -128,3 +129,47 @@ class UserRepository:
         stmt = select(func.count(User.id)).where(User.last_seen_at >= cutoff)
         result = await session.execute(stmt)
         return result.scalar() or 0
+
+
+class FeedbackRepository:
+    """Repository for Feedback model operations."""
+
+    @staticmethod
+    async def create(
+        session: AsyncSession,
+        telegram_id: int,
+        app_id: str,
+        message: str,
+    ) -> Feedback:
+        """Create feedback record.
+
+        Args:
+            session: AsyncSession for database operations
+            telegram_id: Telegram user ID (must exist in users table)
+            app_id: Application identifier (e.g., "postbox")
+            message: Feedback message text
+
+        Returns:
+            Feedback instance
+
+        Raises:
+            ValueError: If app_id is invalid
+            SQLAlchemyError: If database operation fails (e.g., FK constraint)
+        """
+        # Validate app_id against registered applications
+        if not get_app(app_id):
+            raise ValueError(f"Invalid app_id: {app_id!r}")
+
+        try:
+            feedback = Feedback(
+                telegram_id=telegram_id,
+                app_id=app_id,
+                message=message.strip(),
+                status="new",
+            )
+            session.add(feedback)
+            await session.commit()
+            return feedback
+        except SQLAlchemyError:
+            await session.rollback()
+            raise

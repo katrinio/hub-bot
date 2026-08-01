@@ -1,5 +1,5 @@
 import os
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from aiogram.fsm.context import FSMContext
@@ -11,6 +11,21 @@ from hub_bot.handlers import (
     feedback_handler,
 )
 from hub_bot.states import FeedbackForm
+
+
+@pytest.fixture
+def mock_feedback_db() -> MagicMock:
+    """Fixture to mock feedback database operations."""
+    with patch("hub_bot.handlers.get_session") as mock_get_session, \
+         patch("hub_bot.handlers.FeedbackRepository.create", new_callable=AsyncMock) as mock_create:
+        mock_session = AsyncMock()
+        mock_get_session.return_value.__aenter__.return_value = mock_session
+
+        mock_feedback = AsyncMock()
+        mock_feedback.id = 1
+        mock_create.return_value = mock_feedback
+
+        yield {"get_session": mock_get_session, "create": mock_create, "feedback": mock_feedback}
 
 
 @pytest.mark.asyncio
@@ -131,7 +146,24 @@ async def test_feedback_form_accepts_text_message() -> None:
         bot = AsyncMock()
         bot.send_message = AsyncMock()
 
-        await feedback_form_handler(message, state, bot)
+        # Mock database feedback creation
+        mock_feedback = MagicMock()
+        mock_feedback.id = 1
+
+        with patch("hub_bot.handlers.get_session") as mock_get_session, \
+             patch("hub_bot.handlers.FeedbackRepository.create", new_callable=AsyncMock) as mock_create:
+            mock_session = AsyncMock()
+            mock_get_session.return_value.__aenter__.return_value = mock_session
+            mock_create.return_value = mock_feedback
+
+            await feedback_form_handler(message, state, bot)
+
+        # Verify feedback was created
+        mock_create.assert_called_once()
+        create_kwargs = mock_create.call_args.kwargs
+        assert create_kwargs["telegram_id"] == 987654321
+        assert create_kwargs["app_id"] == "postbox"
+        assert create_kwargs["message"] == "This is a bug report"
 
         # Verify admin received message
         bot.send_message.assert_called_once()
@@ -151,6 +183,9 @@ async def test_feedback_form_accepts_text_message() -> None:
         reply_text = message.reply.call_args[0][0]
         assert "Спасибо" in reply_text
         assert "Postbox" in reply_text
+
+        # Verify state was cleared
+        state.clear.assert_called_once()
 
         # Verify state cleared
         state.clear.assert_called_once()
