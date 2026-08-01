@@ -31,6 +31,11 @@ Hub Bot создаёт **короткоживущий подписанный pay
 ```json
 {
   "sub": "123456789",
+  "telegram_id": 123456789,
+  "first_name": "Katrin",
+  "last_name": "Example",
+  "username": "example",
+  "language_code": "ru",
   "aud": "postbox",
   "iss": "the-hub-bot",
   "iat": 1705329000,
@@ -39,6 +44,11 @@ Hub Bot создаёт **короткоживущий подписанный pay
 ```
 
 - **`sub`** (subject) — Telegram user ID как string
+- **`telegram_id`** — Telegram user ID как number
+- **`first_name`** — имя Telegram-пользователя из Hub DB, может быть `null` для старой записи
+- **`last_name`** — фамилия Telegram-пользователя из Hub DB, может быть `null`
+- **`username`** — Telegram username без `@` из Hub DB, может быть `null`
+- **`language_code`** — язык Telegram-пользователя из Hub DB, может быть `null`
 - **`aud`** (audience) — целевое приложение (`postbox`)
 - **`iss`** (issuer) — издатель (`the-hub-bot`)
 - **`iat`** (issued-at) — время создания (UNIX timestamp)
@@ -50,7 +60,8 @@ Payload можно декодировать без secret — это норма�
 - **authenticity** — приложение проверяет что Hub создал token
 - **integrity** — payload не может быть изменён
 
-Нельзя хранить секретные данные в payload. Hub передаёт только `telegram_user_id`, который уже известен Telegram.
+Нельзя хранить секретные данные в payload. Hub передаёт только Telegram ID и публичные профильные поля,
+которые уже сохраняет middleware в таблице `users`.
 
 ## Security Requirements
 
@@ -72,9 +83,11 @@ The Hub (menu)
    ↓
 hub_bot processes callback.from_user.id
    ↓
-create_auth_token(telegram_user_id, audience="postbox")
+Hub reads latest saved user row from users table
    ↓
-JWT generated (fresh, 5 min TTL)
+create_auth_token_for_user(session, telegram_user_id, audience="postbox")
+   ↓
+JWT generated with Telegram profile claims (fresh, 5 min TTL)
    ↓
 build_postbox_auth_url(POSTBOX_URL, token)
    ↓
@@ -90,7 +103,7 @@ Postbox verifies JWT:
   - iss == "the-hub-bot"
   - not expired
    ↓
-Postbox extracts telegram_user_id from sub
+Postbox extracts telegram_user_id from sub and optional profile claims
    ↓
 Postbox creates/finds user by telegram_user_id
    ↓
@@ -104,8 +117,10 @@ Postbox app loaded
 **Key points:**
 - JWT created **only after callback** (not in callback_data)
 - Uses real `callback.from_user.id` from Telegram (not client state)
+- Uses latest Telegram profile already saved in Hub DB
 - Fresh token for each auth attempt
 - `POSTBOX_URL` configured via environment variable (not hardcoded)
+- If Hub DB has no user row or cannot be read, Hub does not issue an incomplete token
 
 ## UX: Link Refresh
 
@@ -142,12 +157,9 @@ HUB_AUTH_SECRET=your_secret_key_min_32_chars_recommended
 Функция генерации:
 
 ```python
-from hub_bot.auth import create_auth_token
+from hub_bot.auth import create_auth_token_for_user
 
-token = create_auth_token(
-    telegram_user_id=123456789,
-    audience="postbox"
-)
+token = await create_auth_token_for_user(session, telegram_user_id=123456789, audience="postbox")
 ```
 
 ### Postbox (и другие приложения)
@@ -165,7 +177,15 @@ payload = jwt.decode(
 )
 
 user_id = int(payload["sub"])
+first_name = payload.get("first_name")
+last_name = payload.get("last_name")
+username = payload.get("username")
+language_code = payload.get("language_code")
 ```
+
+Профильные claims в JWT — это снимок на момент входа. Если приложению позже потребуется обновлять профиль
+без повторного входа через Hub, тогда будет оправдан отдельный защищённый endpoint вроде `GET /api/me`
+с теми же проверками приложения и пользователя.
 
 ## Масштабирование
 

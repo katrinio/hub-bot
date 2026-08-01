@@ -59,16 +59,15 @@ class TestPostboxRefreshCallback:
         """Refresh callback should generate a new auth token and URL."""
         with (
             patch("hub_bot.handlers.get_postbox_url", return_value="http://postbox:8000"),
-            patch("hub_bot.handlers.create_auth_token", return_value="new-jwt-token") as mock_create,
             patch(
-                "hub_bot.handlers.build_postbox_auth_url",
+                "hub_bot.handlers._build_auth_url_for_user",
                 return_value="http://postbox:8000/auth/hub?token=new-jwt-token",
-            ),
+            ) as mock_create,
         ):
             await postbox_refresh_handler(mock_callback_query, postbox_refresh_callback)
 
             # Verify token creation used correct user ID and audience
-            mock_create.assert_called_once_with(telegram_user_id=123456789, audience="postbox")
+            mock_create.assert_called_once_with(123456789, "postbox", "http://postbox:8000")
 
             # Verify message was edited
             assert mock_callback_query.message.edit_text.called
@@ -82,9 +81,9 @@ class TestPostboxRefreshCallback:
         """Refresh callback should edit the message with new auth URL."""
         with (
             patch("hub_bot.handlers.get_postbox_url", return_value="http://postbox:8000"),
-            patch("hub_bot.handlers.create_auth_token", return_value="fresh-token"),
             patch(
-                "hub_bot.handlers.build_postbox_auth_url", return_value="http://postbox:8000/auth/hub?token=fresh-token"
+                "hub_bot.handlers._build_auth_url_for_user",
+                return_value="http://postbox:8000/auth/hub?token=fresh-token",
             ),
         ):
             await postbox_refresh_handler(mock_callback_query, postbox_refresh_callback)
@@ -107,8 +106,7 @@ class TestPostboxRefreshCallback:
         """Refresh callback should answer the query."""
         with (
             patch("hub_bot.handlers.get_postbox_url", return_value="http://postbox:8000"),
-            patch("hub_bot.handlers.create_auth_token", return_value="token"),
-            patch("hub_bot.handlers.build_postbox_auth_url", return_value="http://postbox:8000/auth/hub?token=token"),
+            patch("hub_bot.handlers._build_auth_url_for_user", return_value="http://postbox:8000/auth/hub?token=token"),
         ):
             await postbox_refresh_handler(mock_callback_query, postbox_refresh_callback)
 
@@ -139,7 +137,7 @@ class TestPostboxRefreshCallback:
         """Refresh should handle token creation errors gracefully."""
         with (
             patch("hub_bot.handlers.get_postbox_url", return_value="http://postbox:8000"),
-            patch("hub_bot.handlers.create_auth_token", side_effect=ValueError("Auth error")),
+            patch("hub_bot.handlers._build_auth_url_for_user", side_effect=ValueError("Auth error")),
         ):
             await postbox_refresh_handler(mock_callback_query, postbox_refresh_callback)
 
@@ -216,8 +214,7 @@ class TestRefreshKeyboardIntegration:
         """Refresh response should include refresh button in keyboard."""
         with (
             patch("hub_bot.handlers.get_postbox_url", return_value="http://postbox:8000"),
-            patch("hub_bot.handlers.create_auth_token", return_value="token"),
-            patch("hub_bot.handlers.build_postbox_auth_url", return_value="http://postbox:8000/auth/hub?token=token"),
+            patch("hub_bot.handlers._build_auth_url_for_user", return_value="http://postbox:8000/auth/hub?token=token"),
         ):
             await postbox_refresh_handler(mock_callback_query, postbox_refresh_callback)
 
@@ -243,13 +240,15 @@ class TestRefreshKeyboardIntegration:
 
         with (
             patch("hub_bot.handlers.get_postbox_url", return_value="http://postbox:8000"),
-            patch("hub_bot.handlers.create_auth_token", return_value="token") as mock_create,
-            patch("hub_bot.handlers.build_postbox_auth_url", return_value="http://postbox:8000/auth/hub?token=token"),
+            patch(
+                "hub_bot.handlers._build_auth_url_for_user",
+                return_value="http://postbox:8000/auth/hub?token=token",
+            ) as mock_create,
         ):
             await postbox_refresh_handler(query, postbox_refresh_callback)
 
             # Verify correct user ID was used
-            mock_create.assert_called_once_with(telegram_user_id=987654321, audience="postbox")
+            mock_create.assert_called_once_with(987654321, "postbox", "http://postbox:8000")
 
     @pytest.mark.asyncio
     async def test_refresh_always_uses_postbox_audience(
@@ -260,15 +259,17 @@ class TestRefreshKeyboardIntegration:
         """Refresh should always use 'postbox' audience."""
         with (
             patch("hub_bot.handlers.get_postbox_url", return_value="http://postbox:8000"),
-            patch("hub_bot.handlers.create_auth_token", return_value="token") as mock_create,
-            patch("hub_bot.handlers.build_postbox_auth_url", return_value="http://postbox:8000/auth/hub?token=token"),
+            patch(
+                "hub_bot.handlers._build_auth_url_for_user",
+                return_value="http://postbox:8000/auth/hub?token=token",
+            ) as mock_create,
         ):
             await postbox_refresh_handler(mock_callback_query, postbox_refresh_callback)
 
             # Verify audience is always 'postbox'
             call_args = mock_create.call_args
             assert call_args is not None
-            assert call_args[1]["audience"] == "postbox"
+            assert call_args[0][1] == "postbox"
 
     @pytest.mark.asyncio
     async def test_refresh_multiple_calls_generate_different_tokens(
@@ -279,15 +280,14 @@ class TestRefreshKeyboardIntegration:
         """Multiple refresh calls should generate different tokens (due to iat/exp)."""
         tokens_generated: list[str] = []
 
-        def capture_token(telegram_user_id: int, audience: str) -> str:
-            token = f"token_{len(tokens_generated)}"
-            tokens_generated.append(token)
-            return token
+        def capture_auth_url(telegram_user_id: int, audience: str, postbox_url: str) -> str:
+            auth_url = f"{postbox_url}/auth/hub?token=token_{len(tokens_generated)}"
+            tokens_generated.append(auth_url)
+            return auth_url
 
         with (
             patch("hub_bot.handlers.get_postbox_url", return_value="http://postbox:8000"),
-            patch("hub_bot.handlers.create_auth_token", side_effect=capture_token),
-            patch("hub_bot.handlers.build_postbox_auth_url", side_effect=lambda url, token: f"{url}?token={token}"),
+            patch("hub_bot.handlers._build_auth_url_for_user", side_effect=capture_auth_url),
         ):
             # First refresh
             await postbox_refresh_handler(mock_callback_query, postbox_refresh_callback)

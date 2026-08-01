@@ -6,9 +6,10 @@ from aiogram import Bot, Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InaccessibleMessage, Message
+from sqlalchemy.exc import SQLAlchemyError
 
 from hub_bot.apps import get_app
-from hub_bot.auth import create_auth_token
+from hub_bot.auth import create_auth_token_for_user
 from hub_bot.callback_data import (
     AppCallback,
     FeedbackCallback,
@@ -37,6 +38,12 @@ from hub_bot.urls import build_postbox_auth_url
 logger = logging.getLogger(__name__)
 
 router = Router()
+
+
+async def _build_auth_url_for_user(telegram_user_id: int, audience: str, postbox_url: str) -> str:
+    async with get_session() as session:
+        token = await create_auth_token_for_user(session, telegram_user_id=telegram_user_id, audience=audience)
+    return build_postbox_auth_url(postbox_url, token)
 
 
 @router.message(Command("start"))
@@ -76,9 +83,8 @@ async def app_handler(query: CallbackQuery, callback_data: AppCallback) -> None:
         try:
             # Use Telegram user ID from callback (not from client state)
             user_id = query.from_user.id
-            token = create_auth_token(telegram_user_id=user_id, audience=app.slug)
-            auth_url = build_postbox_auth_url(postbox_url, token)
-        except ValueError as e:
+            auth_url = await _build_auth_url_for_user(user_id, app.slug, postbox_url)
+        except (ValueError, SQLAlchemyError, RuntimeError) as e:
             logger.error("Failed to create auth token for %s: %s", app.slug, type(e).__name__)
             await query.message.edit_text(
                 "Приложение сейчас недоступно.\n\nПопробуй немного позже.",
@@ -127,9 +133,8 @@ async def postbox_refresh_handler(query: CallbackQuery, callback_data: PostboxRe
 
     try:
         user_id = query.from_user.id
-        token = create_auth_token(telegram_user_id=user_id, audience=app.slug)
-        auth_url = build_postbox_auth_url(postbox_url, token)
-    except ValueError as e:
+        auth_url = await _build_auth_url_for_user(user_id, app.slug, postbox_url)
+    except (ValueError, SQLAlchemyError, RuntimeError) as e:
         logger.error("Failed to refresh auth token for %s: %s", app.slug, type(e).__name__)
         await query.message.edit_text(
             "Не смог обновить ссылку.\n\nПопробуй немного позже.",
@@ -210,10 +215,9 @@ async def feedback_cancel_command_handler(message: Message, state: FSMContext) -
                 if postbox_url:
                     try:
                         user_id = message.from_user.id
-                        token = create_auth_token(telegram_user_id=user_id, audience=app.slug)
-                        auth_url = build_postbox_auth_url(postbox_url, token)
+                        auth_url = await _build_auth_url_for_user(user_id, app.slug, postbox_url)
                         keyboard = build_postbox_auth_keyboard(auth_url)
-                    except ValueError:
+                    except (ValueError, SQLAlchemyError, RuntimeError):
                         keyboard = build_app_keyboard(app)
                 else:
                     keyboard = build_app_keyboard(app)
@@ -298,10 +302,9 @@ async def feedback_form_handler(message: Message, state: FSMContext, bot: Bot) -
         if postbox_url:
             try:
                 user_id = message.from_user.id
-                token = create_auth_token(telegram_user_id=user_id, audience=app.slug)
-                auth_url = build_postbox_auth_url(postbox_url, token)
+                auth_url = await _build_auth_url_for_user(user_id, app.slug, postbox_url)
                 keyboard = build_postbox_auth_keyboard(auth_url)
-            except ValueError:
+            except (ValueError, SQLAlchemyError, RuntimeError):
                 keyboard = build_app_keyboard(app)
         else:
             keyboard = build_app_keyboard(app)
@@ -333,10 +336,9 @@ async def feedback_cancel_handler(query: CallbackQuery, state: FSMContext) -> No
                 if postbox_url:
                     try:
                         user_id = query.from_user.id
-                        token = create_auth_token(telegram_user_id=user_id, audience=app.slug)
-                        auth_url = build_postbox_auth_url(postbox_url, token)
+                        auth_url = await _build_auth_url_for_user(user_id, app.slug, postbox_url)
                         keyboard = build_postbox_auth_keyboard(auth_url)
-                    except ValueError:
+                    except (ValueError, SQLAlchemyError, RuntimeError):
                         keyboard = build_app_keyboard(app)
                 else:
                     keyboard = build_app_keyboard(app)

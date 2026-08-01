@@ -1,5 +1,5 @@
 import os
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -54,7 +54,11 @@ async def test_app_handler_postbox_with_config() -> None:
         query.from_user.id = 123456789
 
         callback_data = AppCallback(app="postbox")
-        await app_handler(query, callback_data)
+        with patch(
+            "hub_bot.handlers._build_auth_url_for_user",
+            return_value="https://postbox.finpipe.net/auth/hub?token=test-token",
+        ):
+            await app_handler(query, callback_data)
 
         query.answer.assert_called_once()
         query.message.edit_text.assert_called_once()
@@ -97,7 +101,11 @@ async def test_app_handler_postbox_without_config() -> None:
         query.from_user.id = 123456789
 
         callback_data = AppCallback(app="postbox")
-        await app_handler(query, callback_data)
+        with patch(
+            "hub_bot.handlers._build_auth_url_for_user",
+            return_value="https://postbox.finpipe.net/auth/hub?token=test-token",
+        ):
+            await app_handler(query, callback_data)
 
         query.answer.assert_called_once()
         query.message.edit_text.assert_called_once()
@@ -125,7 +133,13 @@ async def test_app_handler_postbox_uses_callback_user_id() -> None:
         query.from_user.id = 987654321  # Different from any client state
 
         callback_data = AppCallback(app="postbox")
-        await app_handler(query, callback_data)
+        with patch(
+            "hub_bot.handlers._build_auth_url_for_user",
+            return_value="https://postbox.finpipe.net/auth/hub?token=test-token",
+        ) as mock_build_auth_url:
+            await app_handler(query, callback_data)
+
+        mock_build_auth_url.assert_called_once_with(987654321, "postbox", "https://postbox.finpipe.net")
 
         # Verify create_auth_token was called (indirectly through URL generation)
         call_args = query.message.edit_text.call_args

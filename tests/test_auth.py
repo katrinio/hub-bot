@@ -1,10 +1,34 @@
 import os
+from collections.abc import AsyncIterator
 from datetime import datetime, timezone
 
 import jwt
 import pytest
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from hub_bot.auth import ISSUER, TTL_MINUTES, create_auth_token, get_auth_secret
+from hub_bot.auth import ISSUER, TTL_MINUTES, create_auth_token, create_auth_token_for_user, get_auth_secret
+from hub_bot.db.models import Base
+from hub_bot.db.repository import UserRepository
+
+
+@pytest.fixture
+async def test_db() -> AsyncIterator[async_sessionmaker[AsyncSession]]:
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    yield async_sessionmaker(engine, expire_on_commit=False)
+
+    await engine.dispose()
+
+
+@pytest.fixture
+async def session(test_db: async_sessionmaker[AsyncSession]) -> AsyncIterator[AsyncSession]:
+    async with test_db() as session:
+        yield session
 
 
 def test_get_auth_secret_from_env() -> None:
@@ -213,5 +237,127 @@ def test_create_auth_token_custom_time() -> None:
         )
 
         assert decoded["iat"] == int(custom_time.timestamp())
+    finally:
+        os.environ.pop("HUB_AUTH_SECRET", None)
+
+
+@pytest.mark.asyncio
+async def test_create_auth_token_for_user_contains_telegram_profile_claims(session: AsyncSession) -> None:
+    os.environ["HUB_AUTH_SECRET"] = "test-secret"
+
+    try:
+        await UserRepository.upsert(
+            session,
+            telegram_id=123456789,
+            username="example",
+            first_name="Katrin",
+            last_name="Example",
+            language_code="ru",
+        )
+
+        token = await create_auth_token_for_user(session, 123456789, "postbox")
+        decoded = jwt.decode(token, "test-secret", algorithms=["HS256"], audience="postbox")
+
+        assert decoded["telegram_id"] == 123456789
+        assert decoded["first_name"] == "Katrin"
+        assert decoded["last_name"] == "Example"
+        assert decoded["username"] == "example"
+        assert decoded["language_code"] == "ru"
+    finally:
+        os.environ.pop("HUB_AUTH_SECRET", None)
+
+
+@pytest.mark.asyncio
+async def test_create_auth_token_for_user_serializes_nullable_profile_claims(session: AsyncSession) -> None:
+    os.environ["HUB_AUTH_SECRET"] = "test-secret"
+
+    try:
+        await UserRepository.upsert(
+            session,
+            telegram_id=123456789,
+            username=None,
+            first_name=None,
+            last_name=None,
+            language_code=None,
+        )
+
+        token = await create_auth_token_for_user(session, 123456789, "postbox")
+        decoded = jwt.decode(token, "test-secret", algorithms=["HS256"], audience="postbox")
+
+        assert decoded["telegram_id"] == 123456789
+        assert decoded["first_name"] is None
+        assert decoded["last_name"] is None
+        assert decoded["username"] is None
+        assert decoded["language_code"] is None
+    finally:
+        os.environ.pop("HUB_AUTH_SECRET", None)
+
+
+@pytest.mark.asyncio
+async def test_create_auth_token_for_user_preserves_required_claims(session: AsyncSession) -> None:
+    os.environ["HUB_AUTH_SECRET"] = "test-secret"
+
+    try:
+        now = datetime(2026, 1, 15, 10, 0, 0, tzinfo=timezone.utc)  # noqa: UP017
+        await UserRepository.upsert(session, telegram_id=987654321, first_name="Test")
+
+        token = await create_auth_token_for_user(session, 987654321, "postbox", now=now)
+        decoded = jwt.decode(
+            token,
+            "test-secret",
+            algorithms=["HS256"],
+            audience="postbox",
+            options={"verify_exp": False},
+        )
+
+        assert decoded["sub"] == "987654321"
+        assert decoded["aud"] == "postbox"
+        assert decoded["iss"] == ISSUER
+        assert decoded["iat"] == int(now.timestamp())
+        assert decoded["exp"] - decoded["iat"] == TTL_MINUTES * 60
+    finally:
+        os.environ.pop("HUB_AUTH_SECRET", None)
+
+
+@pytest.mark.asyncio
+async def test_create_auth_token_for_user_uses_requested_user_row(session: AsyncSession) -> None:
+    os.environ["HUB_AUTH_SECRET"] = "test-secret"
+
+    try:
+        await UserRepository.upsert(session, telegram_id=111, username="first", first_name="First")
+        await UserRepository.upsert(session, telegram_id=222, username="second", first_name="Second")
+
+        token = await create_auth_token_for_user(session, 222, "postbox")
+        decoded = jwt.decode(token, "test-secret", algorithms=["HS256"], audience="postbox")
+
+        assert decoded["sub"] == "222"
+        assert decoded["telegram_id"] == 222
+        assert decoded["first_name"] == "Second"
+        assert decoded["username"] == "second"
+    finally:
+        os.environ.pop("HUB_AUTH_SECRET", None)
+
+
+@pytest.mark.asyncio
+async def test_create_auth_token_for_user_requires_existing_hub_user(session: AsyncSession) -> None:
+    os.environ["HUB_AUTH_SECRET"] = "test-secret"
+
+    try:
+        with pytest.raises(ValueError, match="Hub user not found"):
+            await create_auth_token_for_user(session, 404, "postbox")
+    finally:
+        os.environ.pop("HUB_AUTH_SECRET", None)
+
+
+@pytest.mark.asyncio
+async def test_create_auth_token_for_user_db_read_error_does_not_issue_token(session: AsyncSession) -> None:
+    os.environ["HUB_AUTH_SECRET"] = "test-secret"
+
+    try:
+        await session.execute(text("DROP TABLE users"))
+        await session.commit()
+
+        with pytest.raises(SQLAlchemyError):
+            await create_auth_token_for_user(session, 123456789, "postbox")
     finally:
         os.environ.pop("HUB_AUTH_SECRET", None)
