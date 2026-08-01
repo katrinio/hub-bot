@@ -293,7 +293,18 @@ async def test_feedback_admin_message_includes_user_id() -> None:
         bot = AsyncMock()
         bot.send_message = AsyncMock()
 
-        await feedback_form_handler(message, state, bot)
+        # Mock database
+        mock_feedback = MagicMock()
+        mock_feedback.id = 1
+        with (
+            patch("hub_bot.handlers.get_session") as mock_get_session,
+            patch("hub_bot.handlers.FeedbackRepository.create", new_callable=AsyncMock) as mock_create,
+        ):
+            mock_session = AsyncMock()
+            mock_get_session.return_value.__aenter__.return_value = mock_session
+            mock_create.return_value = mock_feedback
+
+            await feedback_form_handler(message, state, bot)
 
         call_kwargs = bot.send_message.call_args.kwargs
         admin_message = call_kwargs["text"]
@@ -325,7 +336,18 @@ async def test_feedback_admin_message_includes_username_if_exists() -> None:
         bot = AsyncMock()
         bot.send_message = AsyncMock()
 
-        await feedback_form_handler(message, state, bot)
+        # Mock database
+        mock_feedback = MagicMock()
+        mock_feedback.id = 1
+        with (
+            patch("hub_bot.handlers.get_session") as mock_get_session,
+            patch("hub_bot.handlers.FeedbackRepository.create", new_callable=AsyncMock) as mock_create,
+        ):
+            mock_session = AsyncMock()
+            mock_get_session.return_value.__aenter__.return_value = mock_session
+            mock_create.return_value = mock_feedback
+
+            await feedback_form_handler(message, state, bot)
 
         call_kwargs = bot.send_message.call_args.kwargs
         admin_message = call_kwargs["text"]
@@ -433,7 +455,18 @@ async def test_feedback_success_shows_app_screen() -> None:
         bot = AsyncMock()
         bot.send_message = AsyncMock()
 
-        await feedback_form_handler(message, state, bot)
+        # Mock database
+        mock_feedback = MagicMock()
+        mock_feedback.id = 1
+        with (
+            patch("hub_bot.handlers.get_session") as mock_get_session,
+            patch("hub_bot.handlers.FeedbackRepository.create", new_callable=AsyncMock) as mock_create,
+        ):
+            mock_session = AsyncMock()
+            mock_get_session.return_value.__aenter__.return_value = mock_session
+            mock_create.return_value = mock_feedback
+
+            await feedback_form_handler(message, state, bot)
 
         # Should show success
         message.reply.assert_called_once()
@@ -472,18 +505,29 @@ async def test_feedback_delivery_failure_shown_to_user() -> None:
         bot = AsyncMock()
         bot.send_message = AsyncMock(side_effect=Exception("Telegram API error"))
 
-        await feedback_form_handler(message, state, bot)
+        # Mock database - feedback is saved successfully
+        mock_feedback = MagicMock()
+        mock_feedback.id = 1
+        with (
+            patch("hub_bot.handlers.get_session") as mock_get_session,
+            patch("hub_bot.handlers.FeedbackRepository.create", new_callable=AsyncMock) as mock_create,
+        ):
+            mock_session = AsyncMock()
+            mock_get_session.return_value.__aenter__.return_value = mock_session
+            mock_create.return_value = mock_feedback
 
-        # Should NOT claim success
+            await feedback_form_handler(message, state, bot)
+
+        # Should show success (feedback is saved in DB even if admin notification fails)
         message.reply.assert_called_once()
         reply_text = message.reply.call_args[0][0]
-        assert "не получилось" in reply_text.lower()
+        assert "Спасибо" in reply_text
 
         # Should clear state
         state.clear.assert_called_once()
 
-        # Should NOT show app screen after error
-        message.answer.assert_not_called()
+        # Should show app screen (feedback is safely saved)
+        message.answer.assert_called_once()
     finally:
         os.environ.pop("ADMIN_TELEGRAM_ID", None)
 
