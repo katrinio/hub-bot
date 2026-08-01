@@ -4,8 +4,9 @@ import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
 from hub_bot.settings import get_database_url
@@ -41,6 +42,13 @@ _state = _DatabaseState()
 AsyncSessionLocal = _state.session_factory
 
 
+def _enable_sqlite_foreign_keys(dbapi_connection: Any, _connection_record: Any) -> None:
+    """Enable foreign key constraints for SQLite."""
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
+
+
 async def init_db() -> None:
     """Initialize database: create engine and session factory.
 
@@ -54,6 +62,14 @@ async def init_db() -> None:
         echo=False,
         pool_pre_ping=True,
     )
+
+    # Enable foreign keys for SQLite
+    if "sqlite" in database_url:
+        event.listen(
+            _state.async_engine.sync_engine,
+            "connect",
+            _enable_sqlite_foreign_keys,
+        )
 
     _state.session_factory.configure(
         async_sessionmaker(

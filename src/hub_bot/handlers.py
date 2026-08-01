@@ -17,7 +17,7 @@ from hub_bot.callback_data import (
     HomeCallback,
     PostboxRefreshCallback,
 )
-from hub_bot.db import UserRepository
+from hub_bot.db import FeedbackRepository, UserRepository
 from hub_bot.db.connection import get_session
 from hub_bot.keyboards import (
     build_app_keyboard,
@@ -217,7 +217,7 @@ async def feedback_cancel_command_handler(message: Message, state: FSMContext) -
                         user_id = message.from_user.id
                         auth_url = await _build_auth_url_for_user(user_id, app.slug, postbox_url)
                         keyboard = build_postbox_auth_keyboard(auth_url)
-                    except (ValueError, SQLAlchemyError, RuntimeError):
+                    except ValueError, SQLAlchemyError, RuntimeError:
                         keyboard = build_app_keyboard(app)
                 else:
                     keyboard = build_app_keyboard(app)
@@ -272,6 +272,27 @@ async def feedback_form_handler(message: Message, state: FSMContext, bot: Bot) -
         await state.clear()
         return
 
+    # Save feedback to database (BEFORE sending to admin)
+    try:
+        async with get_session() as session:
+            feedback = await FeedbackRepository.create(
+                session,
+                telegram_id=message.from_user.id,
+                app_id=app.slug,
+                message=message.text,
+            )
+        logger.info("Feedback saved: id=%s, app=%s, user=%s", feedback.id, app.slug, message.from_user.id)
+    except ValueError as e:
+        # Invalid app_id should not happen (already validated above), but be safe
+        logger.error("Feedback validation error: %s", e)
+        await message.reply("Ошибка при обработке обратной связи. Попробуй ещё раз.")
+        return  # FSM state is NOT cleared, user can retry
+    except SQLAlchemyError as e:
+        # Database error (e.g., FK constraint, connection issue)
+        logger.error("Failed to save feedback: %s", type(e).__name__, exc_info=True)
+        await message.reply("Ошибка при сохранении обратной связи. Попробуй ещё раз.")
+        return  # FSM state is NOT cleared, user can retry
+
     # Format admin message
     from_text = f"Telegram ID: {message.from_user.id}"
     if message.from_user.username:
@@ -281,16 +302,14 @@ async def feedback_form_handler(message: Message, state: FSMContext, bot: Bot) -
 
     admin_message = f"💬 Feedback · {app.title}\n\n{message.text}\n\nFrom:\n{from_text}"
 
-    # Send to admin
+    # Send to admin (can fail without breaking feedback storage)
     try:
         await bot.send_message(chat_id=admin_id, text=admin_message)
     except Exception as e:
-        logger.error("Failed to send feedback to admin: %s", type(e).__name__)
-        await message.reply("Сейчас обратную связь отправить не получилось. Попробуй позже.")
-        await state.clear()
-        return
+        # Feedback already saved in database, just log admin notification error
+        logger.error("Failed to notify admin about feedback id=%s: %s", feedback.id, type(e).__name__)
 
-    # Success response
+    # Success response (feedback is definitely saved)
     await message.reply(f"Спасибо! Получил обратную связь по {app.title} 🙌")
     await state.clear()
 
@@ -304,7 +323,7 @@ async def feedback_form_handler(message: Message, state: FSMContext, bot: Bot) -
                 user_id = message.from_user.id
                 auth_url = await _build_auth_url_for_user(user_id, app.slug, postbox_url)
                 keyboard = build_postbox_auth_keyboard(auth_url)
-            except (ValueError, SQLAlchemyError, RuntimeError):
+            except ValueError, SQLAlchemyError, RuntimeError:
                 keyboard = build_app_keyboard(app)
         else:
             keyboard = build_app_keyboard(app)
@@ -338,7 +357,7 @@ async def feedback_cancel_handler(query: CallbackQuery, state: FSMContext) -> No
                         user_id = query.from_user.id
                         auth_url = await _build_auth_url_for_user(user_id, app.slug, postbox_url)
                         keyboard = build_postbox_auth_keyboard(auth_url)
-                    except (ValueError, SQLAlchemyError, RuntimeError):
+                    except ValueError, SQLAlchemyError, RuntimeError:
                         keyboard = build_app_keyboard(app)
                 else:
                     keyboard = build_app_keyboard(app)
