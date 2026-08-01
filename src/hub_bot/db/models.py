@@ -57,4 +57,6 @@ class Feedback(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<Feedback(id={self.id}, telegram_id={self.telegram_id}, app_id={self.app_id!r}, status={self.status!r})>"
+        return (
+            f"<Feedback(id={self.id}, telegram_id={self.telegram_id}, app_id={self.app_id!r}, status={self.status!r})>"
+        )

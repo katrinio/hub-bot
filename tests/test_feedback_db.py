@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-from hub_bot.db.models import Base, Feedback, User
+from hub_bot.db.models import Base, Feedback
 from hub_bot.db.repository import FeedbackRepository, UserRepository
 
 

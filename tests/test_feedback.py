@@ -16,8 +16,10 @@ from hub_bot.states import FeedbackForm
 @pytest.fixture
 def mock_feedback_db() -> MagicMock:
     """Fixture to mock feedback database operations."""
-    with patch("hub_bot.handlers.get_session") as mock_get_session, \
-         patch("hub_bot.handlers.FeedbackRepository.create", new_callable=AsyncMock) as mock_create:
+    with (
+        patch("hub_bot.handlers.get_session") as mock_get_session,
+        patch("hub_bot.handlers.FeedbackRepository.create", new_callable=AsyncMock) as mock_create,
+    ):
         mock_session = AsyncMock()
         mock_get_session.return_value.__aenter__.return_value = mock_session
 
@@ -150,8 +152,10 @@ async def test_feedback_form_accepts_text_message() -> None:
         mock_feedback = MagicMock()
         mock_feedback.id = 1
 
-        with patch("hub_bot.handlers.get_session") as mock_get_session, \
-             patch("hub_bot.handlers.FeedbackRepository.create", new_callable=AsyncMock) as mock_create:
+        with (
+            patch("hub_bot.handlers.get_session") as mock_get_session,
+            patch("hub_bot.handlers.FeedbackRepository.create", new_callable=AsyncMock) as mock_create,
+        ):
             mock_session = AsyncMock()
             mock_get_session.return_value.__aenter__.return_value = mock_session
             mock_create.return_value = mock_feedback

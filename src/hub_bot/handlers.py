@@ -217,7 +217,7 @@ async def feedback_cancel_command_handler(message: Message, state: FSMContext) -
                         user_id = message.from_user.id
                         auth_url = await _build_auth_url_for_user(user_id, app.slug, postbox_url)
                         keyboard = build_postbox_auth_keyboard(auth_url)
-                    except (ValueError, SQLAlchemyError, RuntimeError):
+                    except ValueError, SQLAlchemyError, RuntimeError:
                         keyboard = build_app_keyboard(app)
                 else:
                     keyboard = build_app_keyboard(app)
@@ -323,7 +323,7 @@ async def feedback_form_handler(message: Message, state: FSMContext, bot: Bot) -
                 user_id = message.from_user.id
                 auth_url = await _build_auth_url_for_user(user_id, app.slug, postbox_url)
                 keyboard = build_postbox_auth_keyboard(auth_url)
-            except (ValueError, SQLAlchemyError, RuntimeError):
+            except ValueError, SQLAlchemyError, RuntimeError:
                 keyboard = build_app_keyboard(app)
         else:
             keyboard = build_app_keyboard(app)
@@ -357,7 +357,7 @@ async def feedback_cancel_handler(query: CallbackQuery, state: FSMContext) -> No
                         user_id = query.from_user.id
                         auth_url = await _build_auth_url_for_user(user_id, app.slug, postbox_url)
                         keyboard = build_postbox_auth_keyboard(auth_url)
-                    except (ValueError, SQLAlchemyError, RuntimeError):
+                    except ValueError, SQLAlchemyError, RuntimeError:
                         keyboard = build_app_keyboard(app)
                 else:
                     keyboard = build_app_keyboard(app)
