@@ -4,6 +4,11 @@ services:
     image: the-hub-bot:latest
     container_name: the-hub-bot
     restart: unless-stopped
+
+    labels:
+      com.katrin.logs.app: "hub-bot"
+      com.katrin.logs.environment: "production"
+
     env_file:
       - .env
     volumes:
