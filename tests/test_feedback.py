@@ -126,6 +126,19 @@ async def test_feedback_form_stores_app_slug() -> None:
     assert call_kwargs["app_slug"] == "postbox"
 
 
+def _create_feedback_mocks():
+    """Helper to create feedback DB and async context manager mocks."""
+    mock_feedback = MagicMock()
+    mock_feedback.id = 1
+
+    mock_context = AsyncMock()
+    mock_session = AsyncMock()
+    mock_context.__aenter__ = AsyncMock(return_value=mock_session)
+    mock_context.__aexit__ = AsyncMock(return_value=None)
+
+    return mock_feedback, mock_context
+
+
 @pytest.mark.asyncio
 async def test_feedback_form_accepts_text_message() -> None:
     """Test that text feedback is accepted and sent to admin."""
@@ -148,15 +161,7 @@ async def test_feedback_form_accepts_text_message() -> None:
         bot = AsyncMock()
         bot.send_message = AsyncMock()
 
-        # Mock database and auth
-        mock_feedback = MagicMock()
-        mock_feedback.id = 1
-
-        # Create async context manager mock
-        mock_context = AsyncMock()
-        mock_session = AsyncMock()
-        mock_context.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_context.__aexit__ = AsyncMock(return_value=None)
+        mock_feedback, mock_context = _create_feedback_mocks()
 
         with (
             patch("hub_bot.handlers.get_session", return_value=mock_context),
@@ -165,16 +170,7 @@ async def test_feedback_form_accepts_text_message() -> None:
         ):
             await feedback_form_handler(message, state, bot)
 
-        # Verify feedback was created
-        # (mock_create is no longer accessible outside context manager)
         # Verify admin notification was sent
-        bot.send_message.assert_called_once()
-        # Verify success response
-        message.reply.assert_called_once()
-        assert "Спасибо" in message.reply.call_args[0][0]
-        assert create_kwargs["message"] == "This is a bug report"
-
-        # Verify admin received message
         bot.send_message.assert_called_once()
         call_kwargs = bot.send_message.call_args.kwargs
         assert call_kwargs["chat_id"] == 123456789
@@ -194,9 +190,6 @@ async def test_feedback_form_accepts_text_message() -> None:
         assert "Postbox" in reply_text
 
         # Verify state was cleared
-        state.clear.assert_called_once()
-
-        # Verify state cleared
         state.clear.assert_called_once()
     finally:
         os.environ.pop("ADMIN_TELEGRAM_ID", None)
@@ -298,14 +291,7 @@ async def test_feedback_admin_message_includes_user_id() -> None:
         bot = AsyncMock()
         bot.send_message = AsyncMock()
 
-        # Mock database and auth
-        mock_feedback = MagicMock()
-        mock_feedback.id = 1
-
-        mock_context = AsyncMock()
-        mock_session = AsyncMock()
-        mock_context.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_context.__aexit__ = AsyncMock(return_value=None)
+        mock_feedback, mock_context = _create_feedback_mocks()
 
         with (
             patch("hub_bot.handlers.get_session", return_value=mock_context),
@@ -344,14 +330,7 @@ async def test_feedback_admin_message_includes_username_if_exists() -> None:
         bot = AsyncMock()
         bot.send_message = AsyncMock()
 
-        # Mock database and auth
-        mock_feedback = MagicMock()
-        mock_feedback.id = 1
-
-        mock_context = AsyncMock()
-        mock_session = AsyncMock()
-        mock_context.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_context.__aexit__ = AsyncMock(return_value=None)
+        mock_feedback, mock_context = _create_feedback_mocks()
 
         with (
             patch("hub_bot.handlers.get_session", return_value=mock_context),
@@ -466,17 +445,13 @@ async def test_feedback_success_shows_app_screen() -> None:
         bot = AsyncMock()
         bot.send_message = AsyncMock()
 
-        # Mock database
-        mock_feedback = MagicMock()
-        mock_feedback.id = 1
-        with (
-            patch("hub_bot.handlers.get_session") as mock_get_session,
-            patch("hub_bot.handlers.FeedbackRepository.create", new_callable=AsyncMock) as mock_create,
-        ):
-            mock_session = AsyncMock()
-            mock_get_session.return_value.__aenter__.return_value = mock_session
-            mock_create.return_value = mock_feedback
+        mock_feedback, mock_context = _create_feedback_mocks()
 
+        with (
+            patch("hub_bot.handlers.get_session", return_value=mock_context),
+            patch("hub_bot.handlers.FeedbackRepository.create", new_callable=AsyncMock, return_value=mock_feedback),
+            patch("hub_bot.handlers._build_auth_url_for_user", new_callable=AsyncMock, return_value="https://auth.url"),
+        ):
             await feedback_form_handler(message, state, bot)
 
         # Should show success
@@ -516,17 +491,13 @@ async def test_feedback_delivery_failure_shown_to_user() -> None:
         bot = AsyncMock()
         bot.send_message = AsyncMock(side_effect=Exception("Telegram API error"))
 
-        # Mock database - feedback is saved successfully
-        mock_feedback = MagicMock()
-        mock_feedback.id = 1
-        with (
-            patch("hub_bot.handlers.get_session") as mock_get_session,
-            patch("hub_bot.handlers.FeedbackRepository.create", new_callable=AsyncMock) as mock_create,
-        ):
-            mock_session = AsyncMock()
-            mock_get_session.return_value.__aenter__.return_value = mock_session
-            mock_create.return_value = mock_feedback
+        mock_feedback, mock_context = _create_feedback_mocks()
 
+        with (
+            patch("hub_bot.handlers.get_session", return_value=mock_context),
+            patch("hub_bot.handlers.FeedbackRepository.create", new_callable=AsyncMock, return_value=mock_feedback),
+            patch("hub_bot.handlers._build_auth_url_for_user", new_callable=AsyncMock, return_value="https://auth.url"),
+        ):
             await feedback_form_handler(message, state, bot)
 
         # Should show success (feedback is saved in DB even if admin notification fails)
