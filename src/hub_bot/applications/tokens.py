@@ -4,9 +4,9 @@ from typing import Any
 import jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from hub_bot.core.settings import get_auth_secret
+from hub_bot.config import get_auth_secret
 from hub_bot.db.models import User
-from hub_bot.db.repository import UserRepository
+from hub_bot.db.repositories import UserRepository
 
 ISSUER = "the-hub-bot"
 TTL_MINUTES = 5

@@ -5,9 +5,9 @@ from aiogram.filters import Command
 from aiogram.types import CallbackQuery, InaccessibleMessage, Message
 from sqlalchemy.exc import SQLAlchemyError
 
-from hub_bot.core.settings import get_postbox_url
-from hub_bot.domain.apps import get_app
-from hub_bot.services.app_links import build_auth_url_for_user
+from hub_bot.applications.handoff import build_auth_url_for_user
+from hub_bot.applications.registry import get_app
+from hub_bot.config import get_postbox_url
 from hub_bot.telegram.callbacks import AppCallback, HomeCallback, PostboxRefreshCallback
 from hub_bot.telegram.keyboards import (
     build_app_keyboard,
@@ -15,8 +15,8 @@ from hub_bot.telegram.keyboards import (
     build_back_to_hub,
     build_postbox_auth_keyboard,
 )
-from hub_bot.telegram.renderers import render_app_screen
 from hub_bot.telegram.texts import HOME_TEXT
+from hub_bot.telegram.views import render_app_screen
 
 logger = logging.getLogger(__name__)
 router = Router(name=__name__)

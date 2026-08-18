@@ -5,7 +5,7 @@ import logging
 import time
 from collections.abc import Awaitable, Callable, Hashable
 
-from hub_bot.watcher import DeviceRecord, fetch_devices
+from watcher import DeviceRecord, fetch_devices
 
 DEVICE_CACHE_TTL_SECONDS = 10 * 60
 DEVICE_FETCH_FAILURE_RETRY_SECONDS = 60

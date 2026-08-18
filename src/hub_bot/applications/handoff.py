@@ -1,7 +1,7 @@
 from urllib.parse import urlencode
 
+from hub_bot.applications.tokens import create_auth_token_for_user
 from hub_bot.db.connection import get_session
-from hub_bot.services.auth import create_auth_token_for_user
 
 
 def build_postbox_auth_url(base_url: str, token: str) -> str:

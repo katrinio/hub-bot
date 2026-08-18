@@ -1,4 +1,4 @@
-from hub_bot.domain.apps import HubApp
+from hub_bot.applications.registry import HubApp
 
 
 def render_app_screen(app: HubApp) -> str:
