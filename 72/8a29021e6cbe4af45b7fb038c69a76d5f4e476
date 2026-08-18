@@ -1,0 +1,21 @@
+alembic/env.py
+  s_82429efaa47114::t_1dcd8017d1c979 13
+tests/test_parse_devices.py
+  s_82429efaa47114::t_2023d761565c88 236,258,270
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "0.0.51",
+  "base_commit_sha": "728a29021e6cbe4af45b7fb038c69a76d5f4e476",
+  "prompts": {},
+  "sessions": {
+    "s_82429efaa47114": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a015f7-36d1-7911-ba52-e700173ac8c3",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Katrin Torsunova <to.katrin.t@gmail.com>"
+    }
+  }
+}
