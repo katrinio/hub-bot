@@ -1,0 +1,35 @@
+src/watcher/parse_devices.py
+  s_82429efaa47114::t_4d8ec7e26bda69 185-191,201,220,223-226
+src/hub_bot/telegram/bot.py
+  s_82429efaa47114::t_4d8ec7e26bda69 15
+.env.example
+  s_82429efaa47114::t_4d8ec7e26bda69 3-4
+tests/test_bot.py
+  s_82429efaa47114::t_fa1bf8c675be89 24,27,30
+tests/test_parse_devices.py
+  s_82429efaa47114::t_fa1bf8c675be89 3,152-166
+src/hub_bot/telegram/handlers/__init__.py
+  s_82429efaa47114::t_4d8ec7e26bda69 5,11
+pyproject.toml
+  s_82429efaa47114::t_4d8ec7e26bda69 9
+tests/test_devices_command.py
+  s_82429efaa47114::t_fa1bf8c675be89 1-42
+src/hub_bot/telegram/handlers/devices.py
+  s_82429efaa47114::t_4d8ec7e26bda69 1-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "0.0.51",
+  "base_commit_sha": "12bbe66a203720d439131e0041ce084dfc3ead18",
+  "prompts": {},
+  "sessions": {
+    "s_82429efaa47114": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a015f7-36d1-7911-ba52-e700173ac8c3",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Katrin Torsunova <to.katrin.t@gmail.com>"
+    }
+  }
+}
