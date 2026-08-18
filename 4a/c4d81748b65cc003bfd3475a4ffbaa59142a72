@@ -1,0 +1,19 @@
+tests/test_parse_devices.py
+  s_82429efaa47114::t_ddd767f6d21124 1-150
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "0.0.51",
+  "base_commit_sha": "4ac4d81748b65cc003bfd3475a4ffbaa59142a72",
+  "prompts": {},
+  "sessions": {
+    "s_82429efaa47114": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a015f7-36d1-7911-ba52-e700173ac8c3",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Katrin Torsunova <to.katrin.t@gmail.com>"
+    }
+  }
+}
