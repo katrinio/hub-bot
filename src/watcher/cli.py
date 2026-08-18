@@ -18,15 +18,26 @@ def _required_environment_variable(name: str) -> str:
     return value
 
 
+def _admin_telegram_id() -> int:
+    value = _required_environment_variable("ADMIN_TELEGRAM_ID")
+    try:
+        admin_id = int(value)
+    except ValueError:
+        raise ValueError("ADMIN_TELEGRAM_ID должен быть числом") from None
+    if admin_id <= 0:
+        raise ValueError("ADMIN_TELEGRAM_ID должен быть положительным числом")
+    return admin_id
+
+
 async def run(url: str, timeout: float) -> tuple[int, int]:
     """Download, parse, and send the current device list."""
-    records = await fetch_devices(url, timeout)
     token = _required_environment_variable("TELEGRAM_BOT_TOKEN")
-    chat_id = _required_environment_variable("TELEGRAM_CHAT_ID")
+    admin_id = _admin_telegram_id()
+    records = await fetch_devices(url, timeout)
 
     bot = Bot(token=token)
     try:
-        message_count = await send_devices_to_telegram(records, bot, chat_id)
+        message_count = await send_devices_to_telegram(records, bot, admin_id)
     finally:
         await bot.session.close()
     return len(records), message_count

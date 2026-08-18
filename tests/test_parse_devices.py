@@ -213,7 +213,7 @@ async def test_send_devices_stops_after_bounded_retries() -> None:
 @pytest.mark.asyncio
 async def test_run_downloads_parses_sends_and_closes_bot(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "123:token")
-    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-id")
+    monkeypatch.setenv("ADMIN_TELEGRAM_ID", "123456789")
     bot = MagicMock()
     bot.session.close = AsyncMock()
 
@@ -227,13 +227,13 @@ async def test_run_downloads_parses_sends_and_closes_bot(monkeypatch: pytest.Mon
     assert result == (2, 2)
     download.assert_called_once_with("https://example.test/main.py", 5.0)
     bot_class.assert_called_once_with(token="123:token")
-    send.assert_awaited_once_with(parser.parse_devices(SOURCE), bot, "chat-id")
+    send.assert_awaited_once_with(parser.parse_devices(SOURCE), bot, 123456789)
     bot.session.close.assert_awaited_once()
 
 
 @pytest.mark.asyncio
 async def test_run_closes_bot_when_sending_fails(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-id")
+    monkeypatch.setenv("ADMIN_TELEGRAM_ID", "123456789")
     bot = MagicMock()
     bot.session.close = AsyncMock()
 
@@ -253,12 +253,23 @@ async def test_run_closes_bot_when_sending_fails(monkeypatch: pytest.MonkeyPatch
 
 
 @pytest.mark.asyncio
-async def test_run_requires_chat_id(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("TELEGRAM_CHAT_ID", raising=False)
+async def test_run_requires_admin_id(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("ADMIN_TELEGRAM_ID", raising=False)
 
     with (
         patch.object(parser, "download_source", return_value=SOURCE),
-        pytest.raises(ValueError, match="TELEGRAM_CHAT_ID"),
+        pytest.raises(ValueError, match="ADMIN_TELEGRAM_ID"),
+    ):
+        await cli.run("https://example.test/main.py", 5.0)
+
+
+@pytest.mark.asyncio
+async def test_run_rejects_invalid_admin_id(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ADMIN_TELEGRAM_ID", "not-a-number")
+
+    with (
+        patch.object(parser, "download_source", return_value=SOURCE),
+        pytest.raises(ValueError, match="ADMIN_TELEGRAM_ID должен быть числом"),
     ):
         await cli.run("https://example.test/main.py", 5.0)
 

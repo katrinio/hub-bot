@@ -65,7 +65,7 @@ poetry run python -m hub_bot
 poetry run python -m watcher --dry-run
 ```
 
-Для ручной отправки watcher использует `TELEGRAM_BOT_TOKEN` и `TELEGRAM_CHAT_ID`:
+Для ручной отправки watcher использует `TELEGRAM_BOT_TOKEN` и `ADMIN_TELEGRAM_ID`:
 
 ```bash
 poetry run python -m watcher
