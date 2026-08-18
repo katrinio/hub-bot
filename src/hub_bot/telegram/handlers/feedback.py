@@ -1,6 +1,6 @@
 import logging
 
-from aiogram import Bot, Router
+from aiogram import Bot, F, Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InaccessibleMessage, Message
@@ -84,7 +84,7 @@ async def feedback_cancel_command_handler(message: Message, state: FSMContext) -
     )
 
 
-@router.message(FeedbackForm.waiting_for_feedback)
+@router.message(FeedbackForm.waiting_for_feedback, ~F.text.startswith("/"))
 async def feedback_form_handler(message: Message, state: FSMContext, bot: Bot) -> None:
     if not message.from_user:
         await state.clear()
