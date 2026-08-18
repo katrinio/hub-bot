@@ -1,6 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from hub_bot.domain.apps import APPS, HubApp
+from hub_bot.applications.registry import APPS, HubApp
 from hub_bot.telegram.callbacks import (
     AppCallback,
     FeedbackCallback,

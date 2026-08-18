@@ -59,6 +59,18 @@ poetry run python -m hub_bot
 
 Бот читает токен из `.env` файла или переменной окружения.
 
+Самостоятельная проверка Asahi DEVICES watcher без отправки в Telegram:
+
+```bash
+poetry run python -m watcher --dry-run
+```
+
+Для ручной отправки watcher использует `TELEGRAM_BOT_TOKEN` и `TELEGRAM_CHAT_ID`:
+
+```bash
+poetry run python -m watcher
+```
+
 ## Development
 
 Проверки качества перед коммитом:

@@ -7,7 +7,8 @@ import pytest
 from aiogram.exceptions import TelegramNetworkError, TelegramRetryAfter, TelegramServerError
 from aiogram.methods import SendMessage
 
-from hub_bot.watcher import parse_devices as parser
+from watcher import cli, parser
+from watcher import telegram as telegram_delivery
 
 SOURCE = '''
 DEVICES = {
@@ -101,7 +102,7 @@ if os.environ.get("ALLOW_VM", None):
 
 
 def test_format_devices_uses_russian_ui_and_preserves_source_data() -> None:
-    message = parser.format_devices(parser.parse_devices(SOURCE))
+    message = telegram_delivery.format_devices(parser.parse_devices(SOURCE))
 
     assert message.startswith("Устройства Asahi Linux\nНайдено: 2")
     assert "device_id: j274ap" in message
@@ -116,7 +117,7 @@ def test_build_device_messages_splits_only_between_records_and_numbers_parts() -
         for index in range(4)
     ]
 
-    messages = parser.build_device_messages(records, limit=145)
+    messages = telegram_delivery.build_device_messages(records, limit=145)
 
     assert len(messages) > 1
     assert all(len(message) <= 145 for message in messages)
@@ -132,14 +133,14 @@ def test_build_device_messages_splits_only_between_records_and_numbers_parts() -
 @pytest.mark.parametrize("limit", [0, -1])
 def test_build_device_messages_rejects_non_positive_limit(limit: int) -> None:
     with pytest.raises(ValueError, match="message limit must be positive"):
-        parser.build_device_messages(parser.parse_devices(SOURCE), limit)
+        telegram_delivery.build_device_messages(parser.parse_devices(SOURCE), limit)
 
 
 def test_build_device_messages_rejects_record_larger_than_one_message() -> None:
     record = parser.DeviceRecord("oversized", "x" * 200, "14.0", False)
 
     with pytest.raises(ValueError, match="device record 'oversized' exceeds"):
-        parser.build_device_messages([record], limit=150)
+        telegram_delivery.build_device_messages([record], limit=150)
 
 
 @pytest.mark.asyncio
@@ -148,8 +149,10 @@ async def test_send_devices_splits_and_sends_every_message() -> None:
     bot.send_message = AsyncMock()
     records = parser.parse_devices(SOURCE)
 
-    with patch.object(parser, "build_device_messages", return_value=["part one", "part two"]):
-        message_count = await parser.send_devices_to_telegram(records, bot, "chat-id", message_thread_id=42)
+    with patch.object(telegram_delivery, "build_device_messages", return_value=["part one", "part two"]):
+        message_count = await telegram_delivery.send_devices_to_telegram(
+            records, bot, "chat-id", message_thread_id=42
+        )
 
     assert message_count == 2
     assert bot.send_message.await_count == 2
@@ -167,8 +170,8 @@ async def test_send_devices_retries_transient_error(
     error = error_type(method=SendMessage(chat_id=1, text="message"), message="Telegram unavailable")
     bot.send_message = AsyncMock(side_effect=[error, MagicMock()])
 
-    with patch.object(parser.asyncio, "sleep", new=AsyncMock()) as sleep:
-        count = await parser.send_devices_to_telegram(parser.parse_devices(SOURCE), bot, 1)
+    with patch.object(telegram_delivery.asyncio, "sleep", new=AsyncMock()) as sleep:
+        count = await telegram_delivery.send_devices_to_telegram(parser.parse_devices(SOURCE), bot, 1)
 
     assert count == 1
     assert bot.send_message.await_count == 2
@@ -185,10 +188,10 @@ async def test_send_devices_honors_bounded_retry_after() -> None:
     )
     bot.send_message = AsyncMock(side_effect=[error, MagicMock()])
 
-    with patch.object(parser.asyncio, "sleep", new=AsyncMock()) as sleep:
-        await parser.send_devices_to_telegram(parser.parse_devices(SOURCE), bot, 1)
+    with patch.object(telegram_delivery.asyncio, "sleep", new=AsyncMock()) as sleep:
+        await telegram_delivery.send_devices_to_telegram(parser.parse_devices(SOURCE), bot, 1)
 
-    sleep.assert_awaited_once_with(parser.TELEGRAM_MAX_RETRY_DELAY)
+    sleep.assert_awaited_once_with(telegram_delivery.TELEGRAM_MAX_RETRY_DELAY)
 
 
 @pytest.mark.asyncio
@@ -198,10 +201,10 @@ async def test_send_devices_stops_after_bounded_retries() -> None:
     bot.send_message = AsyncMock(side_effect=error)
 
     with (
-        patch.object(parser.asyncio, "sleep", new=AsyncMock()) as sleep,
+        patch.object(telegram_delivery.asyncio, "sleep", new=AsyncMock()) as sleep,
         pytest.raises(TelegramNetworkError),
     ):
-        await parser.send_devices_to_telegram(parser.parse_devices(SOURCE), bot, 1, max_retries=2)
+        await telegram_delivery.send_devices_to_telegram(parser.parse_devices(SOURCE), bot, 1, max_retries=2)
 
     assert bot.send_message.await_count == 3
     assert sleep.await_count == 2
@@ -209,17 +212,17 @@ async def test_send_devices_stops_after_bounded_retries() -> None:
 
 @pytest.mark.asyncio
 async def test_run_downloads_parses_sends_and_closes_bot(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "123:token")
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "chat-id")
     bot = MagicMock()
     bot.session.close = AsyncMock()
 
     with (
         patch.object(parser, "download_source", return_value=SOURCE) as download,
-        patch.object(parser, "get_bot_token", return_value="123:token"),
-        patch.object(parser, "Bot", return_value=bot) as bot_class,
-        patch.object(parser, "send_devices_to_telegram", new=AsyncMock(return_value=2)) as send,
+        patch.object(cli, "Bot", return_value=bot) as bot_class,
+        patch.object(cli, "send_devices_to_telegram", new=AsyncMock(return_value=2)) as send,
     ):
-        result = await parser.run("https://example.test/main.py", 5.0)
+        result = await cli.run("https://example.test/main.py", 5.0)
 
     assert result == (2, 2)
     download.assert_called_once_with("https://example.test/main.py", 5.0)
@@ -236,16 +239,15 @@ async def test_run_closes_bot_when_sending_fails(monkeypatch: pytest.MonkeyPatch
 
     with (
         patch.object(parser, "download_source", return_value=SOURCE),
-        patch.object(parser, "get_bot_token", return_value="123:token"),
-        patch.object(parser, "Bot", return_value=bot),
+        patch.object(cli, "Bot", return_value=bot),
         patch.object(
-            parser,
+            cli,
             "send_devices_to_telegram",
             new=AsyncMock(side_effect=RuntimeError("Telegram unavailable")),
         ),
         pytest.raises(RuntimeError, match="Telegram unavailable"),
     ):
-        await parser.run("https://example.test/main.py", 5.0)
+        await cli.run("https://example.test/main.py", 5.0)
 
     bot.session.close.assert_awaited_once()
 
@@ -256,10 +258,9 @@ async def test_run_requires_chat_id(monkeypatch: pytest.MonkeyPatch) -> None:
 
     with (
         patch.object(parser, "download_source", return_value=SOURCE),
-        patch.object(parser, "get_bot_token", return_value="123:token"),
         pytest.raises(ValueError, match="TELEGRAM_CHAT_ID"),
     ):
-        await parser.run("https://example.test/main.py", 5.0)
+        await cli.run("https://example.test/main.py", 5.0)
 
 
 def test_main_dry_run_prints_devices_without_telegram(capsys: pytest.CaptureFixture[str]) -> None:
@@ -267,11 +268,11 @@ def test_main_dry_run_prints_devices_without_telegram(capsys: pytest.CaptureFixt
 
     with (
         patch.object(sys, "argv", ["parse_devices.py", "--dry-run"]),
-        patch.object(parser, "fetch_devices", new=AsyncMock(return_value=records)) as fetch,
-        patch.object(parser, "run", new=AsyncMock()) as run,
+        patch.object(cli, "fetch_devices", new=AsyncMock(return_value=records)) as fetch,
+        patch.object(cli, "run", new=AsyncMock()) as run,
     ):
-        parser.main()
+        cli.main()
 
-    assert capsys.readouterr().out.strip() == parser.format_devices(records)
+    assert capsys.readouterr().out.strip() == telegram_delivery.format_devices(records)
     fetch.assert_awaited_once_with(parser.DEFAULT_SOURCE_URL, 30.0)
     run.assert_not_awaited()

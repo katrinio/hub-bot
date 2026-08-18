@@ -6,11 +6,11 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InaccessibleMessage, Message
 from sqlalchemy.exc import SQLAlchemyError
 
-from hub_bot.core.settings import get_admin_telegram_id, get_postbox_url
+from hub_bot.applications.handoff import build_auth_url_for_user
+from hub_bot.applications.registry import HubApp, get_app
+from hub_bot.config import get_admin_telegram_id, get_postbox_url
 from hub_bot.db.connection import get_session
-from hub_bot.db.repository import FeedbackRepository
-from hub_bot.domain.apps import HubApp, get_app
-from hub_bot.services.app_links import build_auth_url_for_user
+from hub_bot.db.repositories import FeedbackRepository
 from hub_bot.telegram.callbacks import FeedbackCallback, FeedbackCancelCallback
 from hub_bot.telegram.keyboards import (
     build_app_keyboard,
@@ -18,9 +18,9 @@ from hub_bot.telegram.keyboards import (
     build_feedback_form_keyboard,
     build_postbox_auth_keyboard,
 )
-from hub_bot.telegram.renderers import render_app_screen
 from hub_bot.telegram.states import FeedbackForm
 from hub_bot.telegram.texts import HOME_TEXT
+from hub_bot.telegram.views import render_app_screen
 
 logger = logging.getLogger(__name__)
 router = Router(name=__name__)

@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from hub_bot.services.device_catalog import DEVICE_CACHE_TTL_SECONDS, DeviceCatalog, RequestCooldown
-from hub_bot.watcher import DeviceRecord
+from hub_bot.devices.catalog import DEVICE_CACHE_TTL_SECONDS, DeviceCatalog, RequestCooldown
+from watcher import DeviceRecord
 
 RECORDS = [DeviceRecord("j274ap", "Mac mini (M1, 2020)", "11.0", False)]
 

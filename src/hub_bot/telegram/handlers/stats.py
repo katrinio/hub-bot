@@ -6,9 +6,9 @@ from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
 
-from hub_bot.core.settings import get_admin_telegram_id, get_app_timezone
+from hub_bot.config import get_admin_telegram_id, get_app_timezone
 from hub_bot.db.connection import get_session
-from hub_bot.db.repository import UserRepository
+from hub_bot.db.repositories import UserRepository
 
 logger = logging.getLogger(__name__)
 router = Router(name=__name__)

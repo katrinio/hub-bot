@@ -9,7 +9,7 @@ from aiogram.types import TelegramObject, Update
 from sqlalchemy.exc import SQLAlchemyError
 
 from hub_bot.db.connection import get_session
-from hub_bot.db.repository import UserRepository
+from hub_bot.db.repositories import UserRepository
 
 logger = logging.getLogger(__name__)
 

@@ -2,7 +2,7 @@
 
 import pytest
 
-from hub_bot.services.app_links import build_postbox_auth_url
+from hub_bot.applications.handoff import build_postbox_auth_url
 
 
 def test_build_postbox_auth_url_valid() -> None:

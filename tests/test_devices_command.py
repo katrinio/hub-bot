@@ -8,10 +8,10 @@ from aiogram import Bot
 from aiogram.types import Chat, Message, MessageEntity
 from aiogram.types import User as TelegramUser
 
-from hub_bot.telegram.handlers import devices as devices_module
+from hub_bot.telegram.handlers import asahi_devices as devices_module
 from hub_bot.telegram.handlers import router
 from hub_bot.telegram.states import FeedbackForm
-from hub_bot.watcher import DeviceRecord
+from watcher import DeviceRecord
 
 RECORDS = [DeviceRecord("j274ap", "Mac mini (M1, 2020)", "11.0", False)]
 

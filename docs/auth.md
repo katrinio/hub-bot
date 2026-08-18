@@ -157,7 +157,7 @@ HUB_AUTH_SECRET=your_secret_key_min_32_chars_recommended
 Функция генерации:
 
 ```python
-from hub_bot.services.auth import create_auth_token_for_user
+from hub_bot.applications.tokens import create_auth_token_for_user
 
 token = await create_auth_token_for_user(session, telegram_user_id=123456789, audience="postbox")
 ```
