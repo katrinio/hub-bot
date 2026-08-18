@@ -1,0 +1,24 @@
+README.md
+  s_82429efaa47114::t_0d65940e3a067c 68
+tests/test_parse_devices.py
+  s_82429efaa47114::t_0d65940e3a067c 216,230,236,256-257,261-272
+src/watcher/cli.py
+  s_82429efaa47114::t_0d65940e3a067c 21-31,35,40
+  s_82429efaa47114::t_61ec2d89e38a04 36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "0.0.51",
+  "base_commit_sha": "c318a38ec688a7194b4155b0d123673127dfdd4d",
+  "prompts": {},
+  "sessions": {
+    "s_82429efaa47114": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a015f7-36d1-7911-ba52-e700173ac8c3",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Katrin Torsunova <to.katrin.t@gmail.com>"
+    }
+  }
+}
