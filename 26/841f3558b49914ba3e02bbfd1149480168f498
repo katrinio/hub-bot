@@ -1,0 +1,39 @@
+src/hub_bot/telegram/views.py
+  s_82429efaa47114::t_c8f4b001717d41 1-10
+src/hub_bot/devices/catalog.py
+  s_82429efaa47114::t_c8f4b001717d41 1-93
+src/hub_bot/applications/tokens.py
+  s_82429efaa47114::t_c8f4b001717d41 1-65
+src/watcher/parser.py
+  s_82429efaa47114::t_c8338bf0849858 1-217
+src/hub_bot/db/repositories.py
+  s_82429efaa47114::t_c8f4b001717d41 1-9,11-175
+  s_82429efaa47114::t_d334610a48420a 10
+src/hub_bot/telegram/handlers/asahi_devices.py
+  s_82429efaa47114::t_c8f4b001717d41 1-38
+src/hub_bot/config.py
+  s_82429efaa47114::t_c8f4b001717d41 1-77
+src/hub_bot/telegram/handlers/applications.py
+  s_82429efaa47114::t_c8f4b001717d41 1-18,20-119
+  s_82429efaa47114::t_d334610a48420a 19
+src/hub_bot/applications/handoff.py
+  s_82429efaa47114::t_c8f4b001717d41 1-20
+src/hub_bot/applications/registry.py
+  s_82429efaa47114::t_c8f4b001717d41 1-34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "0.0.51",
+  "base_commit_sha": "26841f3558b49914ba3e02bbfd1149480168f498",
+  "prompts": {},
+  "sessions": {
+    "s_82429efaa47114": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a015f7-36d1-7911-ba52-e700173ac8c3",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Katrin Torsunova <to.katrin.t@gmail.com>"
+    }
+  }
+}
