@@ -10,7 +10,7 @@ from alembic import context
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from hub_bot.core.settings import get_database_url
+from hub_bot.config import get_database_url
 from hub_bot.db.models import Base
 
 # this is the Alembic Config object, which provides

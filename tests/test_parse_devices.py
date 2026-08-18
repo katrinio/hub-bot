@@ -233,6 +233,7 @@ async def test_run_downloads_parses_sends_and_closes_bot(monkeypatch: pytest.Mon
 
 @pytest.mark.asyncio
 async def test_run_closes_bot_when_sending_fails(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "123:token")
     monkeypatch.setenv("ADMIN_TELEGRAM_ID", "123456789")
     bot = MagicMock()
     bot.session.close = AsyncMock()
@@ -254,6 +255,7 @@ async def test_run_closes_bot_when_sending_fails(monkeypatch: pytest.MonkeyPatch
 
 @pytest.mark.asyncio
 async def test_run_requires_admin_id(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "123:token")
     monkeypatch.delenv("ADMIN_TELEGRAM_ID", raising=False)
 
     with (
@@ -265,6 +267,7 @@ async def test_run_requires_admin_id(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.mark.asyncio
 async def test_run_rejects_invalid_admin_id(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "123:token")
     monkeypatch.setenv("ADMIN_TELEGRAM_ID", "not-a-number")
 
     with (
