@@ -182,7 +182,13 @@ def _required_environment_variable(name: str) -> str:
     return value
 
 
-async def send_devices_to_telegram(records: list[DeviceRecord], bot: Bot, chat_id: str) -> int:
+async def fetch_devices(url: str = DEFAULT_SOURCE_URL, timeout: float = 30.0) -> list[DeviceRecord]:
+    """Download and parse devices without blocking the asyncio event loop."""
+    source = await asyncio.to_thread(download_source, url, timeout)
+    return parse_devices(source)
+
+
+async def send_devices_to_telegram(records: list[DeviceRecord], bot: Bot, chat_id: int | str) -> int:
     """Format, split, and send all device records; return the message count."""
     messages = split_message(format_devices(records))
     for message in messages:
@@ -192,7 +198,7 @@ async def send_devices_to_telegram(records: list[DeviceRecord], bot: Bot, chat_i
 
 async def run(url: str, timeout: float) -> tuple[int, int]:
     """Download, parse, and send the current device list."""
-    records = parse_devices(download_source(url, timeout))
+    records = await fetch_devices(url, timeout)
     try:
         token = get_bot_token()
     except ValueError:
@@ -211,7 +217,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Отправить список устройств Asahi Linux в Telegram.")
     parser.add_argument("--url", default=DEFAULT_SOURCE_URL, help="URL исходного src/main.py")
     parser.add_argument("--timeout", type=float, default=30.0, help="таймаут загрузки в секундах")
+    parser.add_argument("--dry-run", action="store_true", help="вывести результат без отправки в Telegram")
     args = parser.parse_args()
+
+    if args.dry_run:
+        records = asyncio.run(fetch_devices(args.url, args.timeout))
+        print(format_devices(records))
+        return
 
     device_count, message_count = asyncio.run(run(args.url, args.timeout))
     print(f"Отправлено устройств: {device_count}; сообщений: {message_count}.")

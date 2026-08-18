@@ -21,12 +21,13 @@ async def test_create_bot() -> None:
         # Verify Bot was instantiated with token
         mock_bot_class.assert_called_once_with(token=token)
 
-        # Verify set_my_commands was called to register /start and /stats
+        # Verify set_my_commands was called to register public commands
         mock_bot_instance.set_my_commands.assert_called_once()
         commands = mock_bot_instance.set_my_commands.call_args[1]["commands"]
-        assert len(commands) == 2
+        assert len(commands) == 3
         command_names = {cmd.command for cmd in commands}
         assert "start" in command_names
+        assert "devices" in command_names
         assert "stats" in command_names
 
 

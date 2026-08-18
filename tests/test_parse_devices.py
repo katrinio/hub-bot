@@ -1,5 +1,6 @@
 """Tests for the Asahi device parser and Telegram delivery."""
 
+import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -148,3 +149,18 @@ async def test_run_requires_chat_id(monkeypatch: pytest.MonkeyPatch) -> None:
         pytest.raises(ValueError, match="TELEGRAM_CHAT_ID"),
     ):
         await parser.run("https://example.test/main.py", 5.0)
+
+
+def test_main_dry_run_prints_devices_without_telegram(capsys: pytest.CaptureFixture[str]) -> None:
+    records = parser.parse_devices(SOURCE)
+
+    with (
+        patch.object(sys, "argv", ["parse_devices.py", "--dry-run"]),
+        patch.object(parser, "fetch_devices", new=AsyncMock(return_value=records)) as fetch,
+        patch.object(parser, "run", new=AsyncMock()) as run,
+    ):
+        parser.main()
+
+    assert capsys.readouterr().out.strip() == parser.format_devices(records)
+    fetch.assert_awaited_once_with(parser.DEFAULT_SOURCE_URL, 30.0)
+    run.assert_not_awaited()

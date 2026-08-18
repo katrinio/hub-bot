@@ -12,6 +12,7 @@ async def create_bot(token: str) -> Bot:
     await bot.set_my_commands(
         commands=[
             BotCommand(command="start", description="Start the bot"),
+            BotCommand(command="devices", description="Устройства Asahi Linux"),
             BotCommand(command="stats", description="Show statistics (admin only)"),
         ]
     )
