@@ -1,0 +1,47 @@
+src/hub_bot/telegram/handlers/feedback.py
+  s_82429efaa47114::t_2848e6b3d5f43b 3,87
+src/watcher/parse_devices.py
+  s_82429efaa47114::t_b24b018ca0a481 10,28,301-337,341
+  s_82429efaa47114::t_3e1dc2a8a6fac1 18,24-26,98-132,137-151,161-178,183-185,190-191,194-196,200,205-207,235-241,243,246-253,255,257-273,281-285,339
+  s_82429efaa47114::t_d94c3094efc4e2 152-160,274-280
+  s_82429efaa47114::t_e4820629b7f6ab 230-232
+  s_82429efaa47114::t_88bb4bb918497e 133-136
+src/hub_bot/telegram/handlers/devices.py
+  s_82429efaa47114::t_2848e6b3d5f43b 4,10-11,15-16,22-27,29-35
+src/hub_bot/services/device_catalog.py
+  s_82429efaa47114::t_4fcdd44664640d 36,43-58,64,68-75
+  s_82429efaa47114::t_302a206638f0ba 1-35,37-42,59-63,76-93
+  s_82429efaa47114::t_c0fe4700b23ca7 65-67
+tests/test_devices_command.py
+  s_82429efaa47114::t_ab741870520e35 127-146
+  s_82429efaa47114::t_5d26a7539aaa54 3,7-9,11,13,16-29,32-53,57,59-62,65-66,68,70-71,82-85,87-89,91,96-126
+  s_82429efaa47114::t_d462a878e0c30f 12
+  s_82429efaa47114::t_3ecd140e964fad 56,77-79
+tests/test_parse_devices.py
+  s_82429efaa47114::t_4ab328b76d07dd 138-139,141-142
+  s_82429efaa47114::t_6af9199b0a9d65 8,59-102,113-131,149,151-152,157-160,162,166,168-207
+  s_82429efaa47114::t_ab741870520e35 133,135
+  s_82429efaa47114::t_4fcdd44664640d 7,161,163-165,167
+tests/test_device_catalog.py
+  s_82429efaa47114::t_4fcdd44664640d 71-95
+  s_82429efaa47114::t_9925bccda29795 1-7,9-11,16-70,96-138
+  s_82429efaa47114::t_4ab328b76d07dd 8,12-15
+src/hub_bot/telegram/handlers/__init__.py
+  s_82429efaa47114::t_2848e6b3d5f43b 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "0.0.51",
+  "base_commit_sha": "0845f5ec53875cc66ccaf9ff56006fcd87ecae47",
+  "prompts": {},
+  "sessions": {
+    "s_82429efaa47114": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a015f7-36d1-7911-ba52-e700173ac8c3",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Katrin Torsunova <to.katrin.t@gmail.com>"
+    }
+  }
+}
