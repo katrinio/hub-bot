@@ -10,8 +10,8 @@ from alembic import context
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
+from hub_bot.core.settings import get_database_url
 from hub_bot.db.models import Base
-from hub_bot.settings import get_database_url
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from hub_bot.bot import create_bot, create_dispatcher
+from hub_bot.telegram.bot import create_bot, create_dispatcher
 
 
 @pytest.mark.asyncio
@@ -11,7 +11,7 @@ async def test_create_bot() -> None:
     token = "123:ABC-xyz"
 
     # Mock Bot to avoid real API calls
-    with patch("hub_bot.bot.Bot") as mock_bot_class:
+    with patch("hub_bot.telegram.bot.Bot") as mock_bot_class:
         mock_bot_instance = AsyncMock()
         mock_bot_instance.set_my_commands = AsyncMock()
         mock_bot_class.return_value = mock_bot_instance

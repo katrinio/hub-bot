@@ -1,5 +1,28 @@
 # Архитектура The Hub Bot
 
+## Структура пакета
+
+```text
+hub_bot/
+├── core/                 # конфигурация и настройки процесса
+├── domain/               # чистые бизнес-понятия и реестр приложений
+├── services/             # сценарии: JWT handoff и ссылки в приложения
+├── db/                   # ORM, сессии и репозитории
+└── telegram/             # Telegram-доставка и UI
+    ├── handlers/         # обработчики по сценариям
+    │   ├── navigation.py
+    │   ├── feedback.py
+    │   └── stats.py
+    ├── callbacks.py
+    ├── keyboards.py
+    ├── middleware.py
+    ├── states.py
+    └── texts.py
+```
+
+Зависимости направлены от внешнего слоя к внутреннему: `telegram → services/domain/db`, а `domain`
+не зависит от Telegram или SQLAlchemy.
+
 ## Основной принцип
 
 ```

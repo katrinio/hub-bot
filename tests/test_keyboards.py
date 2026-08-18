@@ -1,6 +1,6 @@
 from aiogram.types import InlineKeyboardMarkup
 
-from hub_bot.keyboards import (
+from hub_bot.telegram.keyboards import (
     build_app_keyboard,
     build_app_menu,
     build_back_to_hub,
@@ -37,7 +37,7 @@ def test_app_menu_callback_data() -> None:
 
 def test_app_menu_reflects_registry() -> None:
     """Test that menu is built from registry, not hardcoded."""
-    from hub_bot.apps import APPS
+    from hub_bot.domain.apps import APPS
 
     keyboard = build_app_menu()
     assert len(keyboard.inline_keyboard) == len(APPS)
@@ -123,7 +123,7 @@ def test_postbox_auth_keyboard_back_button_callback() -> None:
 
 def test_build_app_keyboard_structure() -> None:
     """Test that generic app keyboard has correct structure."""
-    from hub_bot.apps import get_app
+    from hub_bot.domain.apps import get_app
 
     app = get_app("postbox")
     assert app is not None

@@ -2,10 +2,10 @@ import asyncio
 import logging
 import sys
 
-from hub_bot.bot import create_bot, create_dispatcher
+from hub_bot.core.settings import get_bot_token, validate_admin_telegram_id
 from hub_bot.db import close_db, init_db
 from hub_bot.db.connection import ensure_db_directory
-from hub_bot.settings import get_bot_token, validate_admin_telegram_id
+from hub_bot.telegram.bot import create_bot, create_dispatcher
 
 logging.basicConfig(
     level=logging.INFO,

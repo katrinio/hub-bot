@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from hub_bot.apps import HubApp
-from hub_bot.renderers import render_app_screen
+from hub_bot.domain.apps import HubApp
+from hub_bot.telegram.renderers import render_app_screen
 
 
 class TestRenderAppScreen:
@@ -100,7 +100,7 @@ class TestRenderAppScreen:
 
     def test_postbox_description(self) -> None:
         """Postbox should have a description."""
-        from hub_bot.apps import APPS
+        from hub_bot.domain.apps import APPS
 
         postbox = None
         for app in APPS:
@@ -114,7 +114,7 @@ class TestRenderAppScreen:
 
     def test_postbox_has_planned_features(self) -> None:
         """Postbox should have 2-4 planned features."""
-        from hub_bot.apps import APPS
+        from hub_bot.domain.apps import APPS
 
         postbox = None
         for app in APPS:

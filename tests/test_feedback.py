@@ -4,21 +4,21 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from aiogram.fsm.context import FSMContext
 
-from hub_bot.callback_data import FeedbackCallback, FeedbackCancelCallback
-from hub_bot.handlers import (
+from hub_bot.telegram.callbacks import FeedbackCallback, FeedbackCancelCallback
+from hub_bot.telegram.handlers.feedback import (
     feedback_cancel_handler,
     feedback_form_handler,
     feedback_handler,
 )
-from hub_bot.states import FeedbackForm
+from hub_bot.telegram.states import FeedbackForm
 
 
 @pytest.fixture
 def mock_feedback_db() -> MagicMock:
     """Fixture to mock feedback database operations."""
     with (
-        patch("hub_bot.handlers.get_session") as mock_get_session,
-        patch("hub_bot.handlers.FeedbackRepository.create", new_callable=AsyncMock) as mock_create,
+        patch("hub_bot.telegram.handlers.feedback.get_session") as mock_get_session,
+        patch("hub_bot.telegram.handlers.feedback.FeedbackRepository.create", new_callable=AsyncMock) as mock_create,
     ):
         mock_session = AsyncMock()
         mock_get_session.return_value.__aenter__.return_value = mock_session
@@ -33,7 +33,7 @@ def mock_feedback_db() -> MagicMock:
 @pytest.mark.asyncio
 async def test_feedback_button_appears_in_app_keyboard() -> None:
     """Test that HubApp supports feedback button."""
-    from hub_bot.keyboards import build_postbox_auth_keyboard
+    from hub_bot.telegram.keyboards import build_postbox_auth_keyboard
 
     keyboard = build_postbox_auth_keyboard("https://test.com/auth?token=xyz")
     buttons = keyboard.inline_keyboard
@@ -164,9 +164,17 @@ async def test_feedback_form_accepts_text_message() -> None:
         mock_feedback, mock_context = _create_feedback_mocks()
 
         with (
-            patch("hub_bot.handlers.get_session", return_value=mock_context),
-            patch("hub_bot.handlers.FeedbackRepository.create", new_callable=AsyncMock, return_value=mock_feedback),
-            patch("hub_bot.handlers._build_auth_url_for_user", new_callable=AsyncMock, return_value="https://auth.url"),
+            patch("hub_bot.telegram.handlers.feedback.get_session", return_value=mock_context),
+            patch(
+                "hub_bot.telegram.handlers.feedback.FeedbackRepository.create",
+                new_callable=AsyncMock,
+                return_value=mock_feedback,
+            ),
+            patch(
+                "hub_bot.telegram.handlers.feedback.build_auth_url_for_user",
+                new_callable=AsyncMock,
+                return_value="https://auth.url",
+            ),
         ):
             await feedback_form_handler(message, state, bot)
 
@@ -294,9 +302,17 @@ async def test_feedback_admin_message_includes_user_id() -> None:
         mock_feedback, mock_context = _create_feedback_mocks()
 
         with (
-            patch("hub_bot.handlers.get_session", return_value=mock_context),
-            patch("hub_bot.handlers.FeedbackRepository.create", new_callable=AsyncMock, return_value=mock_feedback),
-            patch("hub_bot.handlers._build_auth_url_for_user", new_callable=AsyncMock, return_value="https://auth.url"),
+            patch("hub_bot.telegram.handlers.feedback.get_session", return_value=mock_context),
+            patch(
+                "hub_bot.telegram.handlers.feedback.FeedbackRepository.create",
+                new_callable=AsyncMock,
+                return_value=mock_feedback,
+            ),
+            patch(
+                "hub_bot.telegram.handlers.feedback.build_auth_url_for_user",
+                new_callable=AsyncMock,
+                return_value="https://auth.url",
+            ),
         ):
             await feedback_form_handler(message, state, bot)
 
@@ -333,9 +349,17 @@ async def test_feedback_admin_message_includes_username_if_exists() -> None:
         mock_feedback, mock_context = _create_feedback_mocks()
 
         with (
-            patch("hub_bot.handlers.get_session", return_value=mock_context),
-            patch("hub_bot.handlers.FeedbackRepository.create", new_callable=AsyncMock, return_value=mock_feedback),
-            patch("hub_bot.handlers._build_auth_url_for_user", new_callable=AsyncMock, return_value="https://auth.url"),
+            patch("hub_bot.telegram.handlers.feedback.get_session", return_value=mock_context),
+            patch(
+                "hub_bot.telegram.handlers.feedback.FeedbackRepository.create",
+                new_callable=AsyncMock,
+                return_value=mock_feedback,
+            ),
+            patch(
+                "hub_bot.telegram.handlers.feedback.build_auth_url_for_user",
+                new_callable=AsyncMock,
+                return_value="https://auth.url",
+            ),
         ):
             await feedback_form_handler(message, state, bot)
 
@@ -448,9 +472,17 @@ async def test_feedback_success_shows_app_screen() -> None:
         mock_feedback, mock_context = _create_feedback_mocks()
 
         with (
-            patch("hub_bot.handlers.get_session", return_value=mock_context),
-            patch("hub_bot.handlers.FeedbackRepository.create", new_callable=AsyncMock, return_value=mock_feedback),
-            patch("hub_bot.handlers._build_auth_url_for_user", new_callable=AsyncMock, return_value="https://auth.url"),
+            patch("hub_bot.telegram.handlers.feedback.get_session", return_value=mock_context),
+            patch(
+                "hub_bot.telegram.handlers.feedback.FeedbackRepository.create",
+                new_callable=AsyncMock,
+                return_value=mock_feedback,
+            ),
+            patch(
+                "hub_bot.telegram.handlers.feedback.build_auth_url_for_user",
+                new_callable=AsyncMock,
+                return_value="https://auth.url",
+            ),
         ):
             await feedback_form_handler(message, state, bot)
 
@@ -494,9 +526,17 @@ async def test_feedback_delivery_failure_shown_to_user() -> None:
         mock_feedback, mock_context = _create_feedback_mocks()
 
         with (
-            patch("hub_bot.handlers.get_session", return_value=mock_context),
-            patch("hub_bot.handlers.FeedbackRepository.create", new_callable=AsyncMock, return_value=mock_feedback),
-            patch("hub_bot.handlers._build_auth_url_for_user", new_callable=AsyncMock, return_value="https://auth.url"),
+            patch("hub_bot.telegram.handlers.feedback.get_session", return_value=mock_context),
+            patch(
+                "hub_bot.telegram.handlers.feedback.FeedbackRepository.create",
+                new_callable=AsyncMock,
+                return_value=mock_feedback,
+            ),
+            patch(
+                "hub_bot.telegram.handlers.feedback.build_auth_url_for_user",
+                new_callable=AsyncMock,
+                return_value="https://auth.url",
+            ),
         ):
             await feedback_form_handler(message, state, bot)
 

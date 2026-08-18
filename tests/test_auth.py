@@ -8,9 +8,10 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from hub_bot.auth import ISSUER, TTL_MINUTES, create_auth_token, create_auth_token_for_user, get_auth_secret
+from hub_bot.core.settings import get_auth_secret
 from hub_bot.db.models import Base
 from hub_bot.db.repository import UserRepository
+from hub_bot.services.auth import ISSUER, TTL_MINUTES, create_auth_token, create_auth_token_for_user
 
 
 @pytest.fixture

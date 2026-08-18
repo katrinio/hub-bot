@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from hub_bot.settings import get_bot_token, get_postbox_url
+from hub_bot.core.settings import get_bot_token, get_postbox_url
 
 
 def test_get_bot_token_from_env() -> None:
