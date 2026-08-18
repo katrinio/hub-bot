@@ -1,0 +1,23 @@
+src/watcher/parse_devices.py
+  s_82429efaa47114::t_930a8c4e5d46da 8,16-19,135,140-142,181,185,189,191-195,200-209,211-213,216-217
+  s_82429efaa47114::t_0133a4a467f8bb 137,196-199
+  s_82429efaa47114::t_e8cd2c6987f4a0 159-160,164-165,167,169,171
+  s_82429efaa47114::t_dc6f576ed9fee0 2
+  s_82429efaa47114::t_18c559b5a2e599 10,13,21,133-134,136,138-139,143-158,161-163,166,168,170,172-180,182-184,186-188,190
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "0.0.51",
+  "base_commit_sha": "2054fcbd6f268f7599c05d1327af5e53e03e4858",
+  "prompts": {},
+  "sessions": {
+    "s_82429efaa47114": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a015f7-36d1-7911-ba52-e700173ac8c3",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Katrin Torsunova <to.katrin.t@gmail.com>"
+    }
+  }
+}
