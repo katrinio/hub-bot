@@ -11,7 +11,7 @@ from aiogram.types import User as TelegramUser
 from hub_bot.telegram.handlers import devices as devices_module
 from hub_bot.telegram.handlers import router
 from hub_bot.telegram.states import FeedbackForm
-from watcher.parse_devices import DeviceRecord
+from hub_bot.watcher import DeviceRecord
 
 RECORDS = [DeviceRecord("j274ap", "Mac mini (M1, 2020)", "11.0", False)]
 

@@ -8,7 +8,7 @@ from aiogram.filters import Command
 from aiogram.types import Message
 
 from hub_bot.services.device_catalog import DeviceCatalog, RequestCooldown
-from watcher.parse_devices import send_devices_to_telegram
+from hub_bot.watcher import send_devices_to_telegram
 
 logger = logging.getLogger(__name__)
 router = Router(name=__name__)

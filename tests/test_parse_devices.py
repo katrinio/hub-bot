@@ -7,7 +7,7 @@ import pytest
 from aiogram.exceptions import TelegramNetworkError, TelegramRetryAfter, TelegramServerError
 from aiogram.methods import SendMessage
 
-from watcher import parse_devices as parser
+from hub_bot.watcher import parse_devices as parser
 
 SOURCE = '''
 DEVICES = {
