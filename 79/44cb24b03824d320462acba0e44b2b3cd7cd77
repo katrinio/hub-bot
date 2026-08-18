@@ -1,0 +1,83 @@
+tests/test_refresh_callback.py
+  s_82429efaa47114::t_39d8ea8353397a 143-146
+  s_82429efaa47114::t_d588023392cd2e 11,61,63,83,85,108,110,125,142,222,224,251,253,270,272,298-299
+docs/auth.md
+  s_82429efaa47114::t_517ecaac0449d3 160
+tests/test_devices_command.py
+  s_82429efaa47114::t_d588023392cd2e 11,14
+src/hub_bot/telegram/keyboards.py
+  s_82429efaa47114::t_3963048bd7beb8 3
+src/hub_bot/devices/__init__.py
+  s_82429efaa47114::t_c8f4b001717d41 1-5
+tests/test_handlers.py
+  s_82429efaa47114::t_d588023392cd2e 7,58,105,137
+src/watcher/__main__.py
+  s_82429efaa47114::t_c8338bf0849858 1-4
+tests/test_settings.py
+  s_82429efaa47114::t_d588023392cd2e 5
+src/watcher/__init__.py
+  s_82429efaa47114::t_c8338bf0849858 1-15
+src/watcher/telegram.py
+  s_82429efaa47114::t_c8338bf0849858 1-119
+src/hub_bot/telegram/handlers/__init__.py
+  s_82429efaa47114::t_3963048bd7beb8 5-6,11
+src/hub_bot/__main__.py
+  s_82429efaa47114::t_3963048bd7beb8 5
+tests/test_keyboards.py
+  s_82429efaa47114::t_d588023392cd2e 40,126
+tests/test_db_user.py
+  s_82429efaa47114::t_d588023392cd2e 10
+src/hub_bot/db/connection.py
+  s_82429efaa47114::t_3963048bd7beb8 12
+src/hub_bot/telegram/handlers/feedback.py
+  s_82429efaa47114::t_d334610a48420a 23
+  s_82429efaa47114::t_3963048bd7beb8 9-11,13
+tests/test_urls.py
+  s_82429efaa47114::t_d588023392cd2e 5
+tests/test_device_catalog.py
+  s_82429efaa47114::t_d588023392cd2e 8-9
+docs/deployment.md
+  s_82429efaa47114::t_517ecaac0449d3 404
+docs/architecture.md
+  s_82429efaa47114::t_2d17b7b7f2de6d 6-35,38-40
+src/hub_bot/telegram/handlers/stats.py
+  s_82429efaa47114::t_3963048bd7beb8 9,11
+tests/test_renderers.py
+  s_82429efaa47114::t_d588023392cd2e 5-6,103,117
+README.md
+  s_82429efaa47114::t_2d17b7b7f2de6d 62-73
+tests/test_apps.py
+  s_82429efaa47114::t_d588023392cd2e 1
+src/hub_bot/db/__init__.py
+  s_82429efaa47114::t_3963048bd7beb8 5
+src/watcher/cli.py
+  s_82429efaa47114::t_c8338bf0849858 1-49
+tests/test_feedback_db.py
+  s_82429efaa47114::t_d588023392cd2e 12
+src/hub_bot/applications/__init__.py
+  s_82429efaa47114::t_c8f4b001717d41 1,3
+src/hub_bot/telegram/middleware.py
+  s_82429efaa47114::t_3963048bd7beb8 12
+tests/test_parse_devices.py
+  s_82429efaa47114::t_517ecaac0449d3 215
+  s_82429efaa47114::t_4e067e78f8da5b 10-11,105,120,136,143,152-155,173-174,191-192,194,204,207,222-223,225,242,244,250,263,271-272,274,276
+tests/test_auth.py
+  s_82429efaa47114::t_d334610a48420a 11
+  s_82429efaa47114::t_d588023392cd2e 12,14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "0.0.51",
+  "base_commit_sha": "7944cb24b03824d320462acba0e44b2b3cd7cd77",
+  "prompts": {},
+  "sessions": {
+    "s_82429efaa47114": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a015f7-36d1-7911-ba52-e700173ac8c3",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Katrin Torsunova <to.katrin.t@gmail.com>"
+    }
+  }
+}
