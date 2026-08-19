@@ -1,5 +1,44 @@
 # Архитектура The Hub Bot
 
+## Структура пакета
+
+```text
+src/
+├── hub_bot/                       # Telegram Hub и его прикладные сценарии
+│   ├── config.py                  # настройки из environment
+│   ├── applications/              # реестр приложений и JWT handoff
+│   │   ├── registry.py
+│   │   ├── tokens.py
+│   │   └── handoff.py
+│   ├── devices/                   # кеш и throttling для /devices
+│   │   └── catalog.py
+│   ├── db/                        # ORM, сессии и репозитории
+│   │   ├── connection.py
+│   │   ├── models.py
+│   │   └── repositories.py
+│   └── telegram/                  # Telegram UI и доставка
+│       ├── handlers/
+│       │   ├── applications.py
+│       │   ├── asahi_devices.py
+│       │   ├── feedback.py
+│       │   └── stats.py
+│       ├── callbacks.py
+│       ├── keyboards.py
+│       ├── middleware.py
+│       ├── states.py
+│       ├── texts.py
+│       └── views.py
+└── watcher/                       # самостоятельный Asahi DEVICES watcher
+    ├── parser.py                  # загрузка и безопасный AST/tokenize-парсинг
+    ├── telegram.py                # форматирование, split и отправка
+    ├── cli.py                     # ручной запуск и environment
+    └── __main__.py                # python -m watcher
+```
+
+`watcher` не импортирует `hub_bot`: его можно запускать и тестировать отдельно. Hub использует только
+публичный API watcher. Внутри Hub зависимости идут от Telegram handlers к конкретным feature-модулям
+`applications`, `devices` и `db`; эти модули не зависят от Telegram UI.
+
 ## Основной принцип
 
 ```

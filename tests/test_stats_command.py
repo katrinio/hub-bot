@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from hub_bot.handlers import stats_handler
+from hub_bot.telegram.handlers.stats import stats_handler
 
 
 @pytest.mark.asyncio

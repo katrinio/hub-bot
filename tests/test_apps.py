@@ -1,4 +1,4 @@
-from hub_bot.apps import APPS, get_app
+from hub_bot.applications.registry import APPS, get_app
 
 
 def test_postbox_registered() -> None:

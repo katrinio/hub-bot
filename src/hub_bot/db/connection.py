@@ -9,7 +9,7 @@ from typing import Any, cast
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
-from hub_bot.settings import get_database_url
+from hub_bot.config import get_database_url
 
 logger = logging.getLogger(__name__)
 

@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from hub_bot.apps import get_app
+from hub_bot.applications.registry import get_app
 from hub_bot.db.models import Feedback, User
 
 

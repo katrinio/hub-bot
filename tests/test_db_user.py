@@ -7,7 +7,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from hub_bot.db.models import Base, User
-from hub_bot.db.repository import UserRepository
+from hub_bot.db.repositories import UserRepository
 
 
 @pytest.fixture

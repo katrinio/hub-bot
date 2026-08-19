@@ -1,4 +1,4 @@
-from hub_bot.callback_data import AppCallback, HomeCallback
+from hub_bot.telegram.callbacks import AppCallback, HomeCallback
 
 
 def test_app_callback_pack() -> None:

@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from aiogram.types import CallbackQuery, Chat, Message, User
 
-from hub_bot.callback_data import PostboxRefreshCallback
-from hub_bot.handlers import postbox_refresh_handler
+from hub_bot.telegram.callbacks import PostboxRefreshCallback
+from hub_bot.telegram.handlers.applications import postbox_refresh_handler
 
 
 @pytest.fixture
@@ -58,9 +58,9 @@ class TestPostboxRefreshCallback:
     ) -> None:
         """Refresh callback should generate a new auth token and URL."""
         with (
-            patch("hub_bot.handlers.get_postbox_url", return_value="http://postbox:8000"),
+            patch("hub_bot.telegram.handlers.applications.get_postbox_url", return_value="http://postbox:8000"),
             patch(
-                "hub_bot.handlers._build_auth_url_for_user",
+                "hub_bot.telegram.handlers.applications.build_auth_url_for_user",
                 return_value="http://postbox:8000/auth/hub?token=new-jwt-token",
             ) as mock_create,
         ):
@@ -80,9 +80,9 @@ class TestPostboxRefreshCallback:
     ) -> None:
         """Refresh callback should edit the message with new auth URL."""
         with (
-            patch("hub_bot.handlers.get_postbox_url", return_value="http://postbox:8000"),
+            patch("hub_bot.telegram.handlers.applications.get_postbox_url", return_value="http://postbox:8000"),
             patch(
-                "hub_bot.handlers._build_auth_url_for_user",
+                "hub_bot.telegram.handlers.applications.build_auth_url_for_user",
                 return_value="http://postbox:8000/auth/hub?token=fresh-token",
             ),
         ):
@@ -105,8 +105,11 @@ class TestPostboxRefreshCallback:
     ) -> None:
         """Refresh callback should answer the query."""
         with (
-            patch("hub_bot.handlers.get_postbox_url", return_value="http://postbox:8000"),
-            patch("hub_bot.handlers._build_auth_url_for_user", return_value="http://postbox:8000/auth/hub?token=token"),
+            patch("hub_bot.telegram.handlers.applications.get_postbox_url", return_value="http://postbox:8000"),
+            patch(
+                "hub_bot.telegram.handlers.applications.build_auth_url_for_user",
+                return_value="http://postbox:8000/auth/hub?token=token",
+            ),
         ):
             await postbox_refresh_handler(mock_callback_query, postbox_refresh_callback)
 
@@ -119,7 +122,7 @@ class TestPostboxRefreshCallback:
         postbox_refresh_callback: PostboxRefreshCallback,
     ) -> None:
         """Refresh should show error if POSTBOX_URL not configured."""
-        with patch("hub_bot.handlers.get_postbox_url", return_value=None):
+        with patch("hub_bot.telegram.handlers.applications.get_postbox_url", return_value=None):
             await postbox_refresh_handler(mock_callback_query, postbox_refresh_callback)
 
             # Verify error message was shown
@@ -136,8 +139,11 @@ class TestPostboxRefreshCallback:
     ) -> None:
         """Refresh should handle token creation errors gracefully."""
         with (
-            patch("hub_bot.handlers.get_postbox_url", return_value="http://postbox:8000"),
-            patch("hub_bot.handlers._build_auth_url_for_user", side_effect=ValueError("Auth error")),
+            patch("hub_bot.telegram.handlers.applications.get_postbox_url", return_value="http://postbox:8000"),
+            patch(
+                "hub_bot.telegram.handlers.applications.build_auth_url_for_user",
+                side_effect=ValueError("Auth error"),
+            ),
         ):
             await postbox_refresh_handler(mock_callback_query, postbox_refresh_callback)
 
@@ -213,8 +219,11 @@ class TestRefreshKeyboardIntegration:
     ) -> None:
         """Refresh response should include refresh button in keyboard."""
         with (
-            patch("hub_bot.handlers.get_postbox_url", return_value="http://postbox:8000"),
-            patch("hub_bot.handlers._build_auth_url_for_user", return_value="http://postbox:8000/auth/hub?token=token"),
+            patch("hub_bot.telegram.handlers.applications.get_postbox_url", return_value="http://postbox:8000"),
+            patch(
+                "hub_bot.telegram.handlers.applications.build_auth_url_for_user",
+                return_value="http://postbox:8000/auth/hub?token=token",
+            ),
         ):
             await postbox_refresh_handler(mock_callback_query, postbox_refresh_callback)
 
@@ -239,9 +248,9 @@ class TestRefreshKeyboardIntegration:
         query.answer = AsyncMock()
 
         with (
-            patch("hub_bot.handlers.get_postbox_url", return_value="http://postbox:8000"),
+            patch("hub_bot.telegram.handlers.applications.get_postbox_url", return_value="http://postbox:8000"),
             patch(
-                "hub_bot.handlers._build_auth_url_for_user",
+                "hub_bot.telegram.handlers.applications.build_auth_url_for_user",
                 return_value="http://postbox:8000/auth/hub?token=token",
             ) as mock_create,
         ):
@@ -258,9 +267,9 @@ class TestRefreshKeyboardIntegration:
     ) -> None:
         """Refresh should always use 'postbox' audience."""
         with (
-            patch("hub_bot.handlers.get_postbox_url", return_value="http://postbox:8000"),
+            patch("hub_bot.telegram.handlers.applications.get_postbox_url", return_value="http://postbox:8000"),
             patch(
-                "hub_bot.handlers._build_auth_url_for_user",
+                "hub_bot.telegram.handlers.applications.build_auth_url_for_user",
                 return_value="http://postbox:8000/auth/hub?token=token",
             ) as mock_create,
         ):
@@ -286,8 +295,8 @@ class TestRefreshKeyboardIntegration:
             return auth_url
 
         with (
-            patch("hub_bot.handlers.get_postbox_url", return_value="http://postbox:8000"),
-            patch("hub_bot.handlers._build_auth_url_for_user", side_effect=capture_auth_url),
+            patch("hub_bot.telegram.handlers.applications.get_postbox_url", return_value="http://postbox:8000"),
+            patch("hub_bot.telegram.handlers.applications.build_auth_url_for_user", side_effect=capture_auth_url),
         ):
             # First refresh
             await postbox_refresh_handler(mock_callback_query, postbox_refresh_callback)

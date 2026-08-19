@@ -401,8 +401,8 @@ docker compose logs hub-bot
 
 **Format:**
 ```
-2026-07-27 14:35:12,345 - hub_bot.handlers - INFO - Hub auth: created new user for telegram_id=123456789
-2026-07-27 14:35:13,456 - hub_bot.bot - INFO - Starting polling
+2026-07-27 14:35:12,345 - hub_bot.telegram.handlers.applications - INFO - Hub auth: created new user for telegram_id=123456789
+2026-07-27 14:35:13,456 - hub_bot.telegram.bot - INFO - Starting polling
 ```
 
 ### Important: Secrets NOT Logged

@@ -3,8 +3,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from hub_bot.callback_data import AppCallback, HomeCallback
-from hub_bot.handlers import app_handler, home_handler, start_handler
+from hub_bot.telegram.callbacks import AppCallback, HomeCallback
+from hub_bot.telegram.handlers.applications import app_handler, home_handler, start_handler
 
 
 @pytest.mark.asyncio
@@ -55,7 +55,7 @@ async def test_app_handler_postbox_with_config() -> None:
 
         callback_data = AppCallback(app="postbox")
         with patch(
-            "hub_bot.handlers._build_auth_url_for_user",
+            "hub_bot.telegram.handlers.applications.build_auth_url_for_user",
             return_value="https://postbox.finpipe.net/auth/hub?token=test-token",
         ):
             await app_handler(query, callback_data)
@@ -102,7 +102,7 @@ async def test_app_handler_postbox_without_config() -> None:
 
         callback_data = AppCallback(app="postbox")
         with patch(
-            "hub_bot.handlers._build_auth_url_for_user",
+            "hub_bot.telegram.handlers.applications.build_auth_url_for_user",
             return_value="https://postbox.finpipe.net/auth/hub?token=test-token",
         ):
             await app_handler(query, callback_data)
@@ -134,7 +134,7 @@ async def test_app_handler_postbox_uses_callback_user_id() -> None:
 
         callback_data = AppCallback(app="postbox")
         with patch(
-            "hub_bot.handlers._build_auth_url_for_user",
+            "hub_bot.telegram.handlers.applications.build_auth_url_for_user",
             return_value="https://postbox.finpipe.net/auth/hub?token=test-token",
         ) as mock_build_auth_url:
             await app_handler(query, callback_data)

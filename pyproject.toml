@@ -6,6 +6,7 @@ authors = ["Katrin Torsunova"]
 readme = "README.md"
 packages = [
     { include = "hub_bot", from = "src" },
+    { include = "watcher", from = "src" },
 ]
 
 [tool.poetry.dependencies]
