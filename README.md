@@ -65,11 +65,36 @@ poetry run python -m hub_bot
 poetry run python -m watcher --dry-run
 ```
 
+Watcher разбирает полный upstream `DEVICES`, но выводит только отслеживаемое устройство `j516sap`
+(MacBook Pro 16-inch, M3 Pro, 2023).
+
 Для ручной отправки watcher использует `TELEGRAM_BOT_TOKEN` и `ADMIN_TELEGRAM_ID`:
 
 ```bash
 poetry run python -m watcher
 ```
+
+### Проверка изменений по cron
+
+Режим `--check` сравнивает `j516sap` с snapshot в `data/watcher/j516sap.json`. Первый запуск только
+сохраняет baseline. Следующие запуски отправляют администратору сообщение исключительно при изменении
+`model`, `min_ver` или `expert_only`. Snapshot обновляется только после успешной отправки.
+
+Инициализация baseline на VPS:
+
+```bash
+cd /home/katrin/projects/hub-bot
+docker compose run --rm hub-bot python -m watcher --check
+```
+
+Пример `crontab -e` для ежедневной проверки в 05:00 по Белграду:
+
+```cron
+CRON_TZ=Europe/Belgrade
+0 5 * * * cd /home/katrin/projects/hub-bot && /usr/bin/flock -n /tmp/hub-bot-watcher.lock /usr/bin/docker compose run --rm hub-bot python -m watcher --check >> data/watcher/cron.log 2>&1
+```
+
+При необходимости snapshot можно перенести через `WATCHER_STATE_PATH` или аргумент `--state-path`.
 
 ## Development
 

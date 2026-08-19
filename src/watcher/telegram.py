@@ -7,6 +7,7 @@ from typing import Any
 from aiogram import Bot
 from aiogram.exceptions import TelegramNetworkError, TelegramRetryAfter, TelegramServerError
 
+from watcher.monitoring import changed_fields
 from watcher.parser import DeviceRecord
 
 TELEGRAM_MESSAGE_LIMIT = 4096
@@ -29,6 +30,16 @@ def format_devices(records: list[DeviceRecord]) -> str:
     heading = f"Устройства Asahi Linux\nНайдено: {len(records)}"
     records_text = "\n\n".join(_format_device_record(record) for record in records)
     return f"{heading}\n\n{records_text}".rstrip()
+
+
+def format_device_change(previous: DeviceRecord, current: DeviceRecord) -> str:
+    """Format a notification containing only fields that changed."""
+    changes = changed_fields(previous, current)
+    if not changes:
+        raise ValueError("cannot format a device change without changed fields")
+    lines = ["Изменение устройства Asahi Linux", f"device_id: {current.device_id}", f"model: {current.mac_model}", ""]
+    lines.extend(f"{name}: {old_value} → {new_value}" for name, (old_value, new_value) in changes.items())
+    return "\n".join(lines)
 
 
 def _pack_device_records(records: list[DeviceRecord], payload_limit: int) -> list[str]:
@@ -117,3 +128,20 @@ async def send_devices_to_telegram(
     for message in messages:
         await _send_message_with_retry(bot, chat_id, message, message_thread_id, max_retries)
     return len(messages)
+
+
+async def send_device_change_to_telegram(
+    previous: DeviceRecord,
+    current: DeviceRecord,
+    bot: Bot,
+    chat_id: int | str,
+    max_retries: int = TELEGRAM_MAX_RETRIES,
+) -> None:
+    """Send a single change notification with the standard retry policy."""
+    await _send_message_with_retry(
+        bot,
+        chat_id,
+        format_device_change(previous, current),
+        message_thread_id=None,
+        max_retries=max_retries,
+    )

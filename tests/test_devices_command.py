@@ -13,7 +13,7 @@ from hub_bot.telegram.handlers import router
 from hub_bot.telegram.states import FeedbackForm
 from watcher import DeviceRecord
 
-RECORDS = [DeviceRecord("j274ap", "Mac mini (M1, 2020)", "11.0", False)]
+RECORDS = [DeviceRecord("j516sap", "MacBook Pro (16-inch, M3 Pro, 2023)", "14.8.3", True)]
 
 
 def _message(text: str = "/devices", thread_id: int | None = None) -> Message:
@@ -67,7 +67,7 @@ async def test_devices_handler_enforces_cooldown() -> None:
     ):
         await devices_module.devices_handler(message, bot)
 
-    message.answer.assert_awaited_once_with("Список недавно запрашивали. Повтори через 13 сек.")
+    message.answer.assert_awaited_once_with("Устройство недавно проверяли. Повтори через 13 сек.")
     catalog.get_devices.assert_not_awaited()
 
 
@@ -90,9 +90,7 @@ async def test_devices_handler_reports_download_or_parse_error() -> None:
     ):
         await devices_module.devices_handler(message, bot)
 
-    message.answer.assert_awaited_once_with(
-        "Не удалось загрузить список устройств. Попробуй позже."
-    )
+    message.answer.assert_awaited_once_with("Не удалось проверить устройство. Попробуй позже.")
 
 
 @pytest.mark.asyncio

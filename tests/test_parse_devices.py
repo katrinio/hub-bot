@@ -1,6 +1,7 @@
 """Tests for the Asahi device parser and Telegram delivery."""
 
 import sys
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -16,6 +17,10 @@ DEVICES = {
     "j433ap": Device(min_ver="14.8.3", expert_only=True),  # iMac (24-inch, M3, 2023)
 }
 '''
+
+TRACKED_RECORDS = [
+    parser.DeviceRecord("j516sap", "MacBook Pro (16-inch, M3 Pro, 2023)", "14.8.3", True),
+]
 
 
 def test_parse_devices_extracts_literals_and_inline_models() -> None:
@@ -211,23 +216,23 @@ async def test_send_devices_stops_after_bounded_retries() -> None:
 
 
 @pytest.mark.asyncio
-async def test_run_downloads_parses_sends_and_closes_bot(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_run_fetches_tracked_device_sends_and_closes_bot(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "123:token")
     monkeypatch.setenv("ADMIN_TELEGRAM_ID", "123456789")
     bot = MagicMock()
     bot.session.close = AsyncMock()
 
     with (
-        patch.object(parser, "download_source", return_value=SOURCE) as download,
+        patch.object(cli, "fetch_tracked_device", new=AsyncMock(return_value=TRACKED_RECORDS)) as fetch,
         patch.object(cli, "Bot", return_value=bot) as bot_class,
-        patch.object(cli, "send_devices_to_telegram", new=AsyncMock(return_value=2)) as send,
+        patch.object(cli, "send_devices_to_telegram", new=AsyncMock(return_value=1)) as send,
     ):
         result = await cli.run("https://example.test/main.py", 5.0)
 
-    assert result == (2, 2)
-    download.assert_called_once_with("https://example.test/main.py", 5.0)
+    assert result == (1, 1)
+    fetch.assert_awaited_once_with("https://example.test/main.py", 5.0)
     bot_class.assert_called_once_with(token="123:token")
-    send.assert_awaited_once_with(parser.parse_devices(SOURCE), bot, 123456789)
+    send.assert_awaited_once_with(TRACKED_RECORDS, bot, 123456789)
     bot.session.close.assert_awaited_once()
 
 
@@ -239,7 +244,7 @@ async def test_run_closes_bot_when_sending_fails(monkeypatch: pytest.MonkeyPatch
     bot.session.close = AsyncMock()
 
     with (
-        patch.object(parser, "download_source", return_value=SOURCE),
+        patch.object(cli, "fetch_tracked_device", new=AsyncMock(return_value=TRACKED_RECORDS)),
         patch.object(cli, "Bot", return_value=bot),
         patch.object(
             cli,
@@ -258,10 +263,7 @@ async def test_run_requires_admin_id(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "123:token")
     monkeypatch.delenv("ADMIN_TELEGRAM_ID", raising=False)
 
-    with (
-        patch.object(parser, "download_source", return_value=SOURCE),
-        pytest.raises(ValueError, match="ADMIN_TELEGRAM_ID"),
-    ):
+    with pytest.raises(ValueError, match="ADMIN_TELEGRAM_ID"):
         await cli.run("https://example.test/main.py", 5.0)
 
 
@@ -270,10 +272,7 @@ async def test_run_rejects_invalid_admin_id(monkeypatch: pytest.MonkeyPatch) -> 
     monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "123:token")
     monkeypatch.setenv("ADMIN_TELEGRAM_ID", "not-a-number")
 
-    with (
-        patch.object(parser, "download_source", return_value=SOURCE),
-        pytest.raises(ValueError, match="ADMIN_TELEGRAM_ID должен быть числом"),
-    ):
+    with pytest.raises(ValueError, match="ADMIN_TELEGRAM_ID должен быть числом"):
         await cli.run("https://example.test/main.py", 5.0)
 
 
@@ -282,11 +281,26 @@ def test_main_dry_run_prints_devices_without_telegram(capsys: pytest.CaptureFixt
 
     with (
         patch.object(sys, "argv", ["parse_devices.py", "--dry-run"]),
-        patch.object(cli, "fetch_devices", new=AsyncMock(return_value=records)) as fetch,
+        patch.object(cli, "fetch_tracked_device", new=AsyncMock(return_value=records)) as fetch,
         patch.object(cli, "run", new=AsyncMock()) as run,
     ):
         cli.main()
 
     assert capsys.readouterr().out.strip() == telegram_delivery.format_devices(records)
     fetch.assert_awaited_once_with(parser.DEFAULT_SOURCE_URL, 30.0)
+    run.assert_not_awaited()
+
+
+def test_main_check_uses_persistent_state_path(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
+    state_path = tmp_path / "device.json"
+
+    with (
+        patch.object(sys, "argv", ["watcher", "--check", "--state-path", str(state_path)]),
+        patch.object(cli, "check_for_changes", new=AsyncMock(return_value="Изменений нет")) as check,
+        patch.object(cli, "run", new=AsyncMock()) as run,
+    ):
+        cli.main()
+
+    assert capsys.readouterr().out.strip() == "Изменений нет"
+    check.assert_awaited_once_with(parser.DEFAULT_SOURCE_URL, 30.0, state_path)
     run.assert_not_awaited()

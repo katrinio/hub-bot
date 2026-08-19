@@ -1,4 +1,4 @@
-"""Telegram command for the current Asahi Linux device list."""
+"""Telegram command for the monitored Asahi Linux device."""
 
 import logging
 import math
@@ -18,11 +18,11 @@ devices_cooldown = RequestCooldown()
 
 @router.message(Command("devices"))
 async def devices_handler(message: Message, bot: Bot) -> None:
-    """Download, parse, and send the current upstream DEVICES mapping."""
+    """Download DEVICES safely and send the monitored device."""
     cooldown_key = ("user", message.from_user.id) if message.from_user else ("chat", message.chat.id)
     retry_after = devices_cooldown.try_acquire(cooldown_key)
     if retry_after > 0:
-        await message.answer(f"Список недавно запрашивали. Повтори через {math.ceil(retry_after)} сек.")
+        await message.answer(f"Устройство недавно проверяли. Повтори через {math.ceil(retry_after)} сек.")
         return
 
     try:
@@ -34,5 +34,5 @@ async def devices_handler(message: Message, bot: Bot) -> None:
             message_thread_id=message.message_thread_id,
         )
     except Exception as error:
-        logger.error("Failed to send Asahi device list: %s", type(error).__name__, exc_info=True)
-        await message.answer("Не удалось загрузить список устройств. Попробуй позже.")
+        logger.error("Failed to send monitored Asahi device: %s", type(error).__name__, exc_info=True)
+        await message.answer("Не удалось проверить устройство. Попробуй позже.")

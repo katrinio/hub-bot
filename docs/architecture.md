@@ -30,6 +30,8 @@ src/
 │       └── views.py
 └── watcher/                       # самостоятельный Asahi DEVICES watcher
     ├── parser.py                  # загрузка и безопасный AST/tokenize-парсинг
+    ├── tracking.py                # выбор отслеживаемого device_id j516sap
+    ├── monitoring.py              # snapshot и определение изменений между запусками
     ├── telegram.py                # форматирование, split и отправка
     ├── cli.py                     # ручной запуск и environment
     └── __main__.py                # python -m watcher

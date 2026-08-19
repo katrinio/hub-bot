@@ -150,6 +150,8 @@ activemq-data/
 # Environments
 .env
 .envrc
+data/watcher/*.json
+data/watcher/*.tmp
 .venv
 env/
 venv/
