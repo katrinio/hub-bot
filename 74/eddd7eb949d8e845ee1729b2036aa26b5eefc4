@@ -1,0 +1,28 @@
+.github/workflows/deploy.yml
+  s_82429efaa47114::t_df70d28e53647f 63-64,66
+  s_82429efaa47114::t_6a86ead9f540ac 61-62,65
+docs/architecture.md
+  s_82429efaa47114::t_b411c324db9699 151,155
+docs/deployment.md
+  s_82429efaa47114::t_b411c324db9699 98
+  s_82429efaa47114::t_6a86ead9f540ac 125,261-263,294-295
+  s_82429efaa47114::t_df70d28e53647f 175
+README.md
+  s_82429efaa47114::t_6a86ead9f540ac 79-80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "0.0.51",
+  "base_commit_sha": "74eddd7eb949d8e845ee1729b2036aa26b5eefc4",
+  "prompts": {},
+  "sessions": {
+    "s_82429efaa47114": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a015f7-36d1-7911-ba52-e700173ac8c3",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Katrin Torsunova <to.katrin.t@gmail.com>"
+    }
+  }
+}
