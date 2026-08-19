@@ -76,7 +76,8 @@ poetry run python -m watcher
 
 ### Проверка изменений по cron
 
-Режим `--check` сравнивает `j516sap` с snapshot в `data/watcher/j516sap.json`. Первый запуск только
+Режим `--check` сравнивает `j516sap` со snapshot в `data/watcher/j516sap.json`. Каталог `data`
+примонтирован в контейнер как `/app/data`. Первый запуск только
 сохраняет baseline. Следующие запуски отправляют администратору сообщение исключительно при изменении
 `model`, `min_ver` или `expert_only`. Snapshot обновляется только после успешной отправки.
 
