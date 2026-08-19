@@ -1,0 +1,57 @@
+src/watcher/monitoring.py
+  s_82429efaa47114::t_9ed33b96a00483 1-51,53-57
+  s_82429efaa47114::t_0be2d187a74f85 52
+.gitignore
+  s_82429efaa47114::t_9ed33b96a00483 153-154
+.env.example
+  s_82429efaa47114::t_6a1e1453e5f9cd 5-6
+src/watcher/__init__.py
+  s_82429efaa47114::t_7014cebd36ee9a 6,11,17,22
+  s_82429efaa47114::t_9ed33b96a00483 3,10,14,19,21
+docs/architecture.md
+  s_82429efaa47114::t_0fa8451b80480e 33
+  s_82429efaa47114::t_6a1e1453e5f9cd 34
+src/watcher/cli.py
+  s_82429efaa47114::t_8d83d0a6ca59c6 12
+  s_82429efaa47114::t_7014cebd36ee9a 14,39,87
+  s_82429efaa47114::t_9ed33b96a00483 6,11,13,49-69,75-83,91-92
+src/hub_bot/devices/catalog.py
+  s_82429efaa47114::t_7014cebd36ee9a 8,25
+tests/test_monitoring.py
+  s_82429efaa47114::t_0ae8311baf3312 1-153
+src/hub_bot/telegram/handlers/asahi_devices.py
+  s_82429efaa47114::t_7014cebd36ee9a 1,21,25,37-38
+src/watcher/telegram.py
+  s_82429efaa47114::t_9ed33b96a00483 10,35-44,131-147
+README.md
+  s_82429efaa47114::t_6a1e1453e5f9cd 77-98
+  s_82429efaa47114::t_0fa8451b80480e 68-70
+src/watcher/tracking.py
+  s_82429efaa47114::t_7014cebd36ee9a 1-27
+src/hub_bot/telegram/bot.py
+  s_82429efaa47114::t_7014cebd36ee9a 15
+tests/test_devices_command.py
+  s_82429efaa47114::t_0fa8451b80480e 16,70,93
+tests/test_tracking.py
+  s_82429efaa47114::t_0fa8451b80480e 1-45
+tests/test_parse_devices.py
+  s_82429efaa47114::t_0fa8451b80480e 21-24,219,226,228,232-233,235,247,266,275,284
+  s_82429efaa47114::t_0ae8311baf3312 292-306
+  s_82429efaa47114::t_3d7255e7d24747 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "0.0.51",
+  "base_commit_sha": "152fc1b53a088f850aa461aa8128e2aec5f4323a",
+  "prompts": {},
+  "sessions": {
+    "s_82429efaa47114": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a015f7-36d1-7911-ba52-e700173ac8c3",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Katrin Torsunova <to.katrin.t@gmail.com>"
+    }
+  }
+}
