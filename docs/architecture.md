@@ -30,6 +30,8 @@ src/
 │       └── views.py
 └── watcher/                       # самостоятельный Asahi DEVICES watcher
     ├── parser.py                  # загрузка и безопасный AST/tokenize-парсинг
+    ├── tracking.py                # выбор отслеживаемого device_id j516sap
+    ├── monitoring.py              # snapshot и определение изменений между запусками
     ├── telegram.py                # форматирование, split и отправка
     ├── cli.py                     # ручной запуск и environment
     └── __main__.py                # python -m watcher
@@ -146,10 +148,10 @@ Administrator получает сообщение
 - **Stateless**: каждый пользователь может оставлять feedback независимо
 - **In-app**: feedback button встроена в app screen (не требует отдельного UI)
 - **Async**: отправка администратору не блокирует пользователя
-- **Graceful degradation**: если HUB_ADMIN_TELEGRAM_ID не настроен, feedback показывает ошибку
+- **Graceful degradation**: если ADMIN_TELEGRAM_ID не настроен, feedback показывает ошибку
 
 ### Configuration
 
-Требует: `HUB_ADMIN_TELEGRAM_ID` (Telegram user ID администратора)
+Требует: `ADMIN_TELEGRAM_ID` (Telegram user ID администратора)
 
 Если не настроено: feedback механизм остаётся доступным, но отправка вернёт ошибку.

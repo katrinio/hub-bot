@@ -5,7 +5,7 @@ import logging
 import time
 from collections.abc import Awaitable, Callable, Hashable
 
-from watcher import DeviceRecord, fetch_devices
+from watcher import DeviceRecord, fetch_tracked_device
 
 DEVICE_CACHE_TTL_SECONDS = 10 * 60
 DEVICE_FETCH_FAILURE_RETRY_SECONDS = 60
@@ -22,7 +22,7 @@ class DeviceCatalog:
 
     def __init__(
         self,
-        fetcher: DeviceFetcher = fetch_devices,
+        fetcher: DeviceFetcher = fetch_tracked_device,
         ttl_seconds: float = DEVICE_CACHE_TTL_SECONDS,
         failure_retry_seconds: float = DEVICE_FETCH_FAILURE_RETRY_SECONDS,
         clock: Clock = time.monotonic,

@@ -95,7 +95,7 @@ Examples:
 
 Used to generate auth URLs for users (not hardcoded).
 
-### HUB_ADMIN_TELEGRAM_ID
+### ADMIN_TELEGRAM_ID
 
 (Optional) Telegram user ID for receiving user feedback from beta-tested applications.
 
@@ -122,6 +122,7 @@ Production layout on VPS:
 /home/username/projects/hub-bot/
 ├── compose.yml          # Docker Compose configuration
 ├── .env                 # Production secrets (mode 600)
+├── data/                # SQLite database and watcher state
 ├── Dockerfile           # Build configuration
 ├── .dockerignore        # Build exclusions
 ├── src/                 # Application source
@@ -171,7 +172,7 @@ Fill in:
 TELEGRAM_BOT_TOKEN=<your-bot-token>
 HUB_AUTH_SECRET=<32-byte-hex-secret>
 POSTBOX_URL=https://postbox.finpipe.net
-HUB_ADMIN_TELEGRAM_ID=<your-user-id>  # Optional: for feedback collection
+ADMIN_TELEGRAM_ID=<your-user-id>  # Admin notifications, feedback, and statistics
 ```
 
 ### 2. Build Docker Image
@@ -257,6 +258,9 @@ cd ~/projects/hub-bot
 git fetch origin main
 git reset --hard origin/main
 
+test -s .env
+mkdir -p data/watcher
+
 docker compose build
 docker compose up -d --remove-orphans
 
@@ -287,7 +291,8 @@ docker image prune -f
 ```
 
 The deploy intentionally does not run `docker compose down`, does not run `git clean`, does not scale the service, and does not start another bot instance in CI.
-`git reset --hard origin/main` updates tracked files only; the production `.env` is untracked/gitignored and remains only on the VPS.
+Compose only reads `.env` and does not mount it into the container. Watcher state is stored under
+`data/watcher`, which is gitignored and bind-mounted into `/app/data`; normal deploys do not overwrite it.
 GitHub Actions passes only SSH connection secrets and never passes or prints application secrets such as `TELEGRAM_BOT_TOKEN`, `HUB_AUTH_SECRET`, or `POSTBOX_URL`.
 
 The workflow uses:

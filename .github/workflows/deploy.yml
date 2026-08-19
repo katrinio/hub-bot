@@ -58,7 +58,12 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            mkdir -p data
+            if [ ! -s .env ]; then
+              echo "Production env file is missing or empty: $(pwd)/.env"
+              exit 1
+            fi
+            mkdir -p data/watcher
+
             docker compose build
 
             docker compose run --rm hub-bot alembic upgrade head
