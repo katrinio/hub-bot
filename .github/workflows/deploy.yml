@@ -125,4 +125,78 @@ jobs:
             infisical_compose exec -T hub-bot alembic current
 
             infisical_compose logs --tail=50 hub-bot
+
+            crontab_file="$(mktemp)"
+            if crontab -l > "$crontab_file" 2>/dev/null; then
+              sed -E \
+                's#(/usr/bin/)?docker compose run --rm hub-bot python -m watcher --check#/usr/bin/docker exec the-hub-bot python -m watcher --check#g' \
+                "$crontab_file" > "${crontab_file}.updated"
+              crontab "${crontab_file}.updated"
+            fi
+            rm -f "$crontab_file" "${crontab_file}.updated"
+
+            secondary_env="$HOME/.config/hub-bot/.env"
+            if grep -Eq '^[[:space:]]*(TELEGRAM_BOT_TOKEN|HUB_AUTH_SECRET)[[:space:]]*=' .env || \
+              { [ -f "$secondary_env" ] && grep -Eq '^[[:space:]]*(TELEGRAM_BOT_TOKEN|HUB_AUTH_SECRET)[[:space:]]*=' "$secondary_env"; }; then
+              primary_backup="$(mktemp)"
+              secondary_backup=""
+              chmod 600 "$primary_backup"
+              cp .env "$primary_backup"
+
+              if [ -f "$secondary_env" ]; then
+                secondary_backup="$(mktemp)"
+                chmod 600 "$secondary_backup"
+                cp "$secondary_env" "$secondary_backup"
+              fi
+
+              migration_complete=false
+              restore_env_files() {
+                if [ "$migration_complete" != "true" ]; then
+                  cp "$primary_backup" .env
+                  if [ -n "$secondary_backup" ]; then
+                    cp "$secondary_backup" "$secondary_env"
+                  fi
+                  docker compose up -d --remove-orphans || true
+                fi
+                rm -f "$primary_backup"
+                if [ -n "$secondary_backup" ]; then
+                  rm -f "$secondary_backup"
+                fi
+              }
+              trap restore_env_files EXIT
+
+              strip_secret_keys() {
+                source_file="$1"
+                [ -f "$source_file" ] || return 0
+                sanitized_file="$(mktemp "${source_file}.sanitized.XXXXXX")"
+                awk '!/^[[:space:]]*(TELEGRAM_BOT_TOKEN|HUB_AUTH_SECRET)[[:space:]]*=/' \
+                  "$source_file" > "$sanitized_file"
+                chmod --reference="$source_file" "$sanitized_file"
+                mv "$sanitized_file" "$source_file"
+              }
+
+              strip_secret_keys .env
+              strip_secret_keys "$secondary_env"
+
+              infisical_compose config --quiet
+              infisical_compose up -d --force-recreate --remove-orphans
+              sleep 5
+
+              container_id="$(infisical_compose ps -q hub-bot)"
+              container_status="$(docker inspect -f '{{.State.Status}}' "$container_id")"
+              restarting="$(docker inspect -f '{{.State.Restarting}}' "$container_id")"
+              if [ -z "$container_id" ] || [ "$container_status" != "running" ] || [ "$restarting" = "true" ]; then
+                echo "hub-bot failed verification after removing file-based secrets"
+                exit 1
+              fi
+
+              docker exec "$container_id" sh -c \
+                'test -n "$TELEGRAM_BOT_TOKEN" && test -n "$HUB_AUTH_SECRET"'
+
+              migration_complete=true
+              restore_env_files
+              trap - EXIT
+              echo "Infisical migration verified; file-based application secrets removed"
+            fi
+
             docker image prune -f
