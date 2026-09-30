@@ -1,0 +1,37 @@
+compose.yml
+  s_775d383c27a674::t_72413553d32d9b 14-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "0.0.56",
+  "base_commit_sha": "30c78f9afca1d8a6944218f9c75eaaa49e5ea3f0",
+  "prompts": {},
+  "sessions": {
+    "s_775d383c27a674": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f1bc-54f6-7b30-9bac-f19a0de4d5f5",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Katrin Torsunova <to.katrin.t@gmail.com>",
+      "usage": [
+        {
+          "model": "gpt-5.6-sol",
+          "input_tokens": 22721,
+          "output_tokens": 814,
+          "cache_read_tokens": 84864,
+          "cache_write_5m_tokens": 0,
+          "cache_write_1h_tokens": 0,
+          "assistant_messages": 3,
+          "turns": 2,
+          "ai_wall_ms": 16264,
+          "first_ts": "2026-09-30T09:54:14.035Z",
+          "last_ts": "2026-09-30T09:54:30.753Z",
+          "session_total_output_tokens": 814
+        }
+      ],
+      "accepted_lines": 3,
+      "overridden_lines": 0
+    }
+  }
+}
