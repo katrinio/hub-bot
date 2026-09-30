@@ -62,22 +62,53 @@ jobs:
               echo "Production env file is missing or empty: $(pwd)/.env"
               exit 1
             fi
+
+            infisical_auth_file="$HOME/.config/infisical/hub-bot-auth.env"
+            if [ ! -r "$infisical_auth_file" ]; then
+              echo "Infisical Machine Identity credentials are missing or unreadable"
+              exit 1
+            fi
+
+            # shellcheck disable=SC1090
+            . "$infisical_auth_file"
+            : "${INFISICAL_CLIENT_ID:?INFISICAL_CLIENT_ID is missing}"
+            : "${INFISICAL_CLIENT_SECRET:?INFISICAL_CLIENT_SECRET is missing}"
+            : "${INFISICAL_PROJECT_ID:?INFISICAL_PROJECT_ID is missing}"
+
+            INFISICAL_TOKEN="$(infisical login \
+              --method=universal-auth \
+              --client-id="$INFISICAL_CLIENT_ID" \
+              --client-secret="$INFISICAL_CLIENT_SECRET" \
+              --silent \
+              --plain)"
+            export INFISICAL_TOKEN
+            unset INFISICAL_CLIENT_ID INFISICAL_CLIENT_SECRET
+
+            infisical_compose() {
+              infisical run \
+                --projectId="$INFISICAL_PROJECT_ID" \
+                --env=prod \
+                --path=/hub-bot \
+                -- docker compose "$@"
+            }
+
+            infisical_compose config --quiet
             mkdir -p data/watcher
 
-            docker compose build
+            infisical_compose build
 
-            docker compose run --rm hub-bot alembic upgrade head
+            infisical_compose run --rm hub-bot alembic upgrade head
 
-            docker compose up -d --remove-orphans
+            infisical_compose up -d --remove-orphans
 
             sleep 5
-            docker compose ps
+            infisical_compose ps
 
-            container_id="$(docker compose ps -q hub-bot)"
+            container_id="$(infisical_compose ps -q hub-bot)"
             if [ -z "$container_id" ]; then
               echo "hub-bot container is missing after deploy"
-              docker compose ps
-              docker compose logs --tail=100 hub-bot
+              infisical_compose ps
+              infisical_compose logs --tail=100 hub-bot
               exit 1
             fi
 
@@ -86,12 +117,12 @@ jobs:
 
             if [ "$container_status" != "running" ] || [ "$restarting" = "true" ]; then
               echo "hub-bot container is not healthy after deploy: status=$container_status restarting=$restarting"
-              docker compose ps
-              docker compose logs --tail=100 hub-bot
+              infisical_compose ps
+              infisical_compose logs --tail=100 hub-bot
               exit 1
             fi
 
-            docker compose exec -T hub-bot alembic current
+            infisical_compose exec -T hub-bot alembic current
 
-            docker compose logs --tail=50 hub-bot
+            infisical_compose logs --tail=50 hub-bot
             docker image prune -f
