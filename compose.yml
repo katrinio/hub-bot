@@ -11,6 +11,9 @@ services:
 
     env_file:
       - .env
+    environment:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN must be set}
+      HUB_AUTH_SECRET: ${HUB_AUTH_SECRET:?HUB_AUTH_SECRET must be set}
     volumes:
       - ./data:/app/data
     logging:
